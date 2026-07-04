@@ -438,6 +438,9 @@ export async function fetchCustomsSources(
       filePath: documentPath,
       sha256,
       sourceUrl: source.sourceUrl,
+      sourceIdentifier: source.id,
+      sourceRole: source.documentRole,
+      publishedDate: source.sourceUpdatedDate ?? null,
       retrievedAt
     });
     const metadataPath = `${documentPath}.metadata.json`;
@@ -603,6 +606,7 @@ function parseSourceDocumentMetadata(json: string): SourceDocumentMetadataV1 | n
 
 function localMatchesSource(local: LocalCustomsSource, source: SarsCustomsSourceV1): boolean {
   if (local.source?.id === source.id) return true;
+  if (local.document.sourceIdentifier === source.id) return true;
   if (local.document.sourceUrl === source.sourceUrl) return true;
   return Boolean(local.document.fileName?.startsWith(`${source.id}_`));
 }
@@ -613,15 +617,23 @@ function localStatus(local: LocalCustomsSource, source: SarsCustomsSourceV1): Sa
     metadataPath: local.metadataPath,
     sha256: local.document.sha256,
     sourceUrl: local.source?.sourceUrl ?? local.document.sourceUrl ?? null,
-    sourceUpdatedDate: local.source?.sourceUpdatedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id)
+    sourceUpdatedDate: local.source?.sourceUpdatedDate ?? local.document.publishedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id)
   };
 }
 
 function descriptorChangeReasons(source: SarsCustomsSourceV1, local: LocalCustomsSource): string[] {
   const reasons: string[] = [];
+  const localSourceIdentifier = local.source?.id ?? local.document.sourceIdentifier ?? null;
+  const localSourceRole = local.source?.documentRole ?? local.document.sourceRole ?? null;
   const localSourceUrl = local.source?.sourceUrl ?? local.document.sourceUrl ?? null;
-  const localUpdatedDate = local.source?.sourceUpdatedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id);
+  const localUpdatedDate = local.source?.sourceUpdatedDate ?? local.document.publishedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id);
 
+  if (localSourceIdentifier && localSourceIdentifier !== source.id) {
+    reasons.push("Source identifier changed since the local fetched metadata was written.");
+  }
+  if (localSourceRole && localSourceRole !== source.documentRole) {
+    reasons.push("Source role changed since the local fetched metadata was written.");
+  }
   if (localSourceUrl && localSourceUrl !== source.sourceUrl) {
     reasons.push("Source URL changed since the local fetched metadata was written.");
   }

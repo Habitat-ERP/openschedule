@@ -26,6 +26,12 @@ export interface BuildCustomsRulesetFromPdfOptions {
   pdfPath: string;
   pages?: readonly number[];
   sourceUrl?: string | null;
+  sourceIdentifier?: string | null;
+  sourceRole?: string | null;
+  publishedDate?: string | null;
+  sourceDocumentEffectiveDate?: string | null;
+  supersedes?: readonly string[];
+  supersededBy?: readonly string[];
   retrievedAt?: string | null;
   generatedAt?: string;
   effectiveDate?: string | null;
@@ -43,6 +49,12 @@ export async function buildCustomsRulesetFromPdf(
     filePath: options.pdfPath,
     sha256: extraction.sourceDocumentSha256,
     sourceUrl: options.sourceUrl ?? null,
+    sourceIdentifier: options.sourceIdentifier,
+    sourceRole: options.sourceRole,
+    publishedDate: options.publishedDate,
+    effectiveDate: options.sourceDocumentEffectiveDate,
+    supersedes: options.supersedes,
+    supersededBy: options.supersededBy,
     retrievedAt: options.retrievedAt ?? null
   });
 
@@ -89,7 +101,9 @@ export function calculateCustomsRulesetId(ruleset: CustomsRulesetV1): string {
     country: ruleset.manifest.country,
     publisher: ruleset.manifest.publisher,
     effectiveDate: ruleset.manifest.effectiveDate ?? null,
-    sourceDocumentSha256s: ruleset.manifest.sourceDocuments.map((document) => document.sha256).sort(),
+    sourceDocuments: ruleset.manifest.sourceDocuments
+      .map(sourceDocumentIdentity)
+      .sort((left, right) => stableStringify(left).localeCompare(stableStringify(right))),
     parser: ruleset.manifest.parser,
     parseMetrics: ruleset.parseMetrics,
     tariffLines: [...ruleset.tariffLines].sort(compareTariffLines)
@@ -308,10 +322,14 @@ function addIssue(issues: ValidationIssueV1[], code: string, message: string, pa
 
 function validateSourceTraces(
   issues: ValidationIssueV1[],
-  traces: readonly SourceTraceV1[],
+  traces: readonly SourceTraceV1[] | undefined,
   sourceHashes: ReadonlySet<string>,
   path: string
 ): void {
+  if (!traces?.length) {
+    addIssue(issues, "source_trace_missing", "sourceTrace must reference at least one ruleset source document.", path);
+    return;
+  }
   traces.forEach((trace, index) => {
     if (!sourceHashes.has(trace.sourceDocumentSha256)) {
       addIssue(issues, "source_trace_unknown_document", "sourceTrace must reference a ruleset source document.", `${path}/${index}/sourceDocumentSha256`);
@@ -405,7 +423,25 @@ function compareTariffLines(left: TariffLineV1, right: TariffLineV1): number {
 }
 
 function compareSourceDocuments(left: SourceDocumentMetadataV1, right: SourceDocumentMetadataV1): number {
-  return left.sha256.localeCompare(right.sha256) || (left.fileName ?? "").localeCompare(right.fileName ?? "");
+  return (
+    (left.sourceIdentifier ?? "").localeCompare(right.sourceIdentifier ?? "") ||
+    left.sha256.localeCompare(right.sha256) ||
+    (left.sourceRole ?? "").localeCompare(right.sourceRole ?? "") ||
+    (left.fileName ?? "").localeCompare(right.fileName ?? "")
+  );
+}
+
+function sourceDocumentIdentity(document: SourceDocumentMetadataV1): Record<string, unknown> {
+  return {
+    sha256: document.sha256,
+    sourceUrl: document.sourceUrl ?? null,
+    sourceIdentifier: document.sourceIdentifier ?? null,
+    sourceRole: document.sourceRole ?? null,
+    publishedDate: document.publishedDate ?? null,
+    effectiveDate: document.effectiveDate ?? null,
+    supersedes: [...(document.supersedes ?? [])].sort(),
+    supersededBy: [...(document.supersededBy ?? [])].sort()
+  };
 }
 
 function formatRulesetDate(value: string): string {

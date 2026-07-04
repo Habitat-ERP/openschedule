@@ -4,6 +4,7 @@ import {
   RulesetManifestV1Schema,
   RulesetDiffV1Schema,
   ValidationReportV1Schema,
+  SourceDocumentMetadataV1Schema,
   SourceTraceV1Schema
 } from "@openschedule/core";
 import {
@@ -22,6 +23,7 @@ import {
 } from "../dist/src/index.js";
 
 test("schema versions are stable", () => {
+  assert.equal(SourceDocumentMetadataV1Schema.properties.schemaVersion.const, "core.source-document-metadata.v1");
   assert.equal(SourceTraceV1Schema.properties.schemaVersion.const, "core.source-trace.v1");
   assert.equal(RulesetManifestV1Schema.properties.schemaVersion.const, "core.ruleset-manifest.v1");
   assert.equal(RulesetDiffV1Schema.properties.schemaVersion.const, "core.ruleset-diff.v1");
@@ -41,6 +43,15 @@ test("schema versions are stable", () => {
   assert.equal(Schedule6ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule6-parse-result.v1");
   assert.equal(Schedule1QaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
   assert.equal(ScheduleFamilyQaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule-family-qa-report.v1");
+});
+
+test("source document metadata exposes provenance fields", () => {
+  assert.ok(SourceDocumentMetadataV1Schema.properties.sourceIdentifier);
+  assert.ok(SourceDocumentMetadataV1Schema.properties.sourceRole);
+  assert.ok(SourceDocumentMetadataV1Schema.properties.publishedDate);
+  assert.ok(SourceDocumentMetadataV1Schema.properties.effectiveDate);
+  assert.ok(SourceDocumentMetadataV1Schema.properties.supersedes);
+  assert.ok(SourceDocumentMetadataV1Schema.properties.supersededBy);
 });
 
 test("tariff line contract keeps audit fields required", () => {

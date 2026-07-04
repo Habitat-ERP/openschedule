@@ -26,6 +26,9 @@ const document = {
   sha256: "0".repeat(64),
   fileName: "synthetic-source",
   sourceUrl: source.sourceUrl,
+  sourceIdentifier: source.id,
+  sourceRole: source.documentRole,
+  publishedDate: source.sourceUpdatedDate,
   retrievedAt: "2026-07-04T00:00:00.000Z"
 } satisfies SourceDocumentMetadataV1;
 

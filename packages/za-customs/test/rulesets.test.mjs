@@ -18,6 +18,9 @@ const sourceDocument = {
   sha256: sourceDocumentSha256,
   fileName: "schedule.pdf",
   sourceUrl: "https://example.test/schedule.pdf",
+  sourceIdentifier: "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1",
+  sourceRole: "consolidated-schedule",
+  publishedDate: "2026-05-29",
   retrievedAt: generatedAt
 };
 
@@ -134,6 +137,26 @@ test("builds deterministic rulesets, validates them, and looks up exact tariff c
   assert.equal(findTariffLine(built, "03073910").tariffCode, "0307.39.10");
 });
 
+test("source provenance changes ruleset IDs without local cache noise", () => {
+  const built = ruleset([tariffLine()]);
+  const localOnlyChange = buildCustomsRuleset({
+    parseResult: parseResult(built.tariffLines),
+    sourceDocuments: [{ ...sourceDocument, fileName: "local-copy.pdf", retrievedAt: "2026-07-05T00:00:00.000Z" }],
+    generatedAt,
+    effectiveDate: "2026-05-29"
+  });
+  const provenanceChange = buildCustomsRuleset({
+    parseResult: parseResult(built.tariffLines),
+    sourceDocuments: [{ ...sourceDocument, publishedDate: "2026-06-01" }],
+    generatedAt,
+    effectiveDate: "2026-05-29"
+  });
+
+  assert.equal(localOnlyChange.manifest.rulesetId, built.manifest.rulesetId);
+  assert.notEqual(provenanceChange.manifest.rulesetId, built.manifest.rulesetId);
+  assert.ok(diffCustomsRulesets(built, provenanceChange).changes.some((change) => change.category === "source_metadata_changed"));
+});
+
 test("derives consumer labels from the full hierarchy without storing them", () => {
   const line = tariffLine();
 
@@ -153,6 +176,7 @@ test("validation catches corrupted canonical fields", () => {
   corrupted.parseMetrics.tariffLines = 2;
   corrupted.tariffLines[0].normalizedTariffCode = "03073911";
   corrupted.tariffLines[0].context[0].normalizedCode = "";
+  corrupted.tariffLines[0].context[1].sourceTrace = [];
   corrupted.tariffLines[0].sourceTrace[0].sourceDocumentSha256 = "1".repeat(64);
 
   const report = validateCustomsRuleset(corrupted);
@@ -162,6 +186,7 @@ test("validation catches corrupted canonical fields", () => {
   assert.ok(codes.includes("parse_metrics_mismatch"));
   assert.ok(codes.includes("code_normalization_mismatch"));
   assert.ok(codes.includes("context_code_normalization_mismatch"));
+  assert.ok(codes.includes("source_trace_missing"));
   assert.ok(codes.includes("source_trace_unknown_document"));
   assert.ok(codes.includes("ruleset_id_mismatch"));
 });

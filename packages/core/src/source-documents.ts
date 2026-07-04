@@ -19,15 +19,28 @@ export function createSourceDocumentMetadata(input: {
   filePath: string;
   sha256: string;
   sourceUrl?: string | null;
+  sourceIdentifier?: string | null;
+  sourceRole?: string | null;
+  publishedDate?: string | null;
+  effectiveDate?: string | null;
+  supersedes?: readonly string[];
+  supersededBy?: readonly string[];
   retrievedAt?: string | null;
 }): SourceDocumentMetadataV1 {
-  return {
+  const metadata: SourceDocumentMetadataV1 = {
     schemaVersion: "core.source-document-metadata.v1",
     sha256: input.sha256,
     fileName: basename(input.filePath),
     sourceUrl: input.sourceUrl ?? null,
     retrievedAt: input.retrievedAt ?? null
   };
+  if (input.sourceIdentifier !== undefined) metadata.sourceIdentifier = input.sourceIdentifier;
+  if (input.sourceRole !== undefined) metadata.sourceRole = input.sourceRole;
+  if (input.publishedDate !== undefined) metadata.publishedDate = input.publishedDate;
+  if (input.effectiveDate !== undefined) metadata.effectiveDate = input.effectiveDate;
+  if (input.supersedes?.length) metadata.supersedes = [...input.supersedes];
+  if (input.supersededBy?.length) metadata.supersededBy = [...input.supersededBy];
+  return metadata;
 }
 
 export async function writeSourceDocumentMetadata(

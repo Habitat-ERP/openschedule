@@ -32,7 +32,13 @@ const manifest = {
     {
       schemaVersion: "core.source-document-metadata.v1",
       sha256: "0".repeat(64),
-      fileName: "synthetic-source"
+      fileName: "synthetic-source",
+      sourceIdentifier: "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1",
+      sourceRole: "consolidated-schedule",
+      publishedDate: "2026-07-04",
+      effectiveDate: "2026-07-04",
+      supersedes: ["ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1_OLD"],
+      supersededBy: []
     }
   ],
   parser: {

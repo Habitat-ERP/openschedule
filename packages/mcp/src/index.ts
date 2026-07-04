@@ -287,6 +287,12 @@ async function buildRuleset(args: JsonObject): Promise<CustomsRulesetV1> {
     pdfPath,
     pages: optionalPages(args.pages),
     sourceUrl: optionalString(metadata?.sourceUrl),
+    sourceIdentifier: optionalString(metadata?.sourceIdentifier),
+    sourceRole: optionalString(metadata?.sourceRole),
+    publishedDate: optionalString(metadata?.publishedDate),
+    sourceDocumentEffectiveDate: optionalString(metadata?.effectiveDate),
+    supersedes: optionalStringArray(metadata?.supersedes),
+    supersededBy: optionalStringArray(metadata?.supersededBy),
     retrievedAt: optionalString(metadata?.retrievedAt),
     effectiveDate: args.effectiveDate === undefined ? null : dateParam(args.effectiveDate, "effectiveDate")
   });
@@ -405,6 +411,11 @@ function dateParam(value: unknown, name: string): string {
 
 function optionalString(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && item) ? value : undefined;
 }
 
 function optionalNumber(value: unknown, name: string): number | null {

@@ -3,6 +3,12 @@ export interface SourceDocumentMetadataV1 {
   sha256: string;
   fileName?: string | null;
   sourceUrl?: string | null;
+  sourceIdentifier?: string | null;
+  sourceRole?: string | null;
+  publishedDate?: string | null;
+  effectiveDate?: string | null;
+  supersedes?: string[];
+  supersededBy?: string[];
   retrievedAt?: string | null;
 }
 

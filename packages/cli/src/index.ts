@@ -158,6 +158,12 @@ async function runBuild(args: string[]): Promise<CustomsRulesetV1> {
     pdfPath,
     pages: optionalPages(values.pages),
     sourceUrl: typeof metadata?.sourceUrl === "string" ? metadata.sourceUrl : null,
+    sourceIdentifier: optionalString(metadata?.sourceIdentifier),
+    sourceRole: optionalString(metadata?.sourceRole),
+    publishedDate: optionalString(metadata?.publishedDate),
+    sourceDocumentEffectiveDate: optionalString(metadata?.effectiveDate),
+    supersedes: optionalStringArray(metadata?.supersedes),
+    supersededBy: optionalStringArray(metadata?.supersededBy),
     retrievedAt: typeof metadata?.retrievedAt === "string" ? metadata.retrievedAt : null,
     effectiveDate
   });
@@ -353,6 +359,11 @@ function stringOption(value: unknown, name: string): string {
 
 function optionalString(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && item) ? value : undefined;
 }
 
 function dateOption(value: unknown, name: string): string {
