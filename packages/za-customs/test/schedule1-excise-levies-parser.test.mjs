@@ -111,6 +111,49 @@ test("keeps Schedule 1 Part 2A rows missing rate visible for QA", () => {
   assert.ok(result.exciseLevyLines[0].parseConfidence < 1);
 });
 
+test("parses Schedule 1 Part 2B ad valorem excise duty rows", () => {
+  const result = parseSchedule1ExciseLeviesTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2025-04-01", 30, 36),
+        item("SCHEDULE 1 / PART 2B", 48, 36),
+        item("Tariff Item", 72, 39),
+        item("Tariff Subheading", 72, 115),
+        item("Article Description", 72, 210),
+        item("Rate of Excise Duty", 72, 702),
+        item("118.15", 96, 39),
+        item("33.03", 96, 115),
+        item("Perfumes and toilet waters:", 96, 210),
+        item("118.15.01", 126, 39),
+        item("3303.00.90", 126, 115),
+        item("Other", 126, 210),
+        item("9%", 126, 702),
+        item("124.37.11", 150, 39),
+        item("8517.62.20", 150, 115),
+        item("Apparatus designed for use when carried in the hand or on the person", 150, 210),
+        item("(excluding two-way radios), with a value for duty purposes exceeding", 159, 210),
+        item("R2 500", 168, 210),
+        item("9%", 168, 702)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.contextRows, 1);
+  assert.equal(result.metrics.candidateRows, 2);
+  assert.equal(result.metrics.exciseLevyLines, 2);
+  assert.equal(result.exciseLevyLines[0].part, "2B");
+  assert.equal(result.exciseLevyLines[0].item, "118.15.01");
+  assert.equal(result.exciseLevyLines[0].rate.kind, "ad_valorem");
+  assert.equal(result.exciseLevyLines[0].rate.components[0].rate, 0.09);
+  assert.equal(
+    result.exciseLevyLines[1].normalizedDescription,
+    "Apparatus designed for use when carried in the hand or on the person (excluding two-way radios), with a value for duty purposes exceeding R2 500"
+  );
+  assert.ok(result.exciseLevyLines[1].warnings.includes("Description or rate text continued across layout rows."));
+  assert.equal(result.exciseLevyLines[1].validFrom, "2025-04-01");
+});
+
 test("optionally parses the live cached SARS Schedule 1 Part 2A PDF when OPENSCHEDULE_SARS_SCHEDULE1_EXCISE_LEVIES_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE1_EXCISE_LEVIES_PDF_PATH;
   if (!pdfPath) {
@@ -121,5 +164,18 @@ test("optionally parses the live cached SARS Schedule 1 Part 2A PDF when OPENSCH
   const result = await parseSchedule1ExciseLeviesPdf({ pdfPath, pages: [3] });
   assert.ok(result.exciseLevyLines.length > 5);
   assert.ok(result.exciseLevyLines.some((line) => line.item === "104.10.10" && line.rate.raw === "7,82c/li"));
+  assert.equal(result.exciseLevyLines[0].sourceTrace[0].sourceDocumentSha256.length, 64);
+});
+
+test("optionally parses the live cached SARS Schedule 1 Part 2B PDF when OPENSCHEDULE_SARS_SCHEDULE1_PART2B_PDF_PATH is set", async (t) => {
+  const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE1_PART2B_PDF_PATH;
+  if (!pdfPath) {
+    t.skip("Set OPENSCHEDULE_SARS_SCHEDULE1_PART2B_PDF_PATH to run the local SARS Schedule 1 Part 2B parser smoke check.");
+    return;
+  }
+
+  const result = await parseSchedule1ExciseLeviesPdf({ pdfPath, pages: [3] });
+  assert.ok(result.exciseLevyLines.length > 5);
+  assert.ok(result.exciseLevyLines.some((line) => line.item === "118.15.01" && line.rate.raw === "9%"));
   assert.equal(result.exciseLevyLines[0].sourceTrace[0].sourceDocumentSha256.length, 64);
 });
