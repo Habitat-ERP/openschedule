@@ -1,5 +1,7 @@
 import type { RulesetManifestV1, SourceTraceV1 } from "@openschedule/core";
 
+export const CUSTOMS_RATE_COLUMNS = ["general", "euUk", "efta", "sadc", "mercosur", "afcfta"] as const;
+
 export type DutyRateKindV1 =
   | "free"
   | "ad_valorem"
@@ -73,7 +75,7 @@ export interface CustomsDutyEstimateV1 {
   warnings: string[];
 }
 
-export type CustomsRateColumnV1 = "general" | "euUk" | "efta" | "sadc" | "mercosur" | "afcfta";
+export type CustomsRateColumnV1 = (typeof CUSTOMS_RATE_COLUMNS)[number];
 
 export interface CustomsRateOptionV1 {
   column: CustomsRateColumnV1;

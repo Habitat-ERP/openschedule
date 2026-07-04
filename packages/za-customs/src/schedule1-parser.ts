@@ -1,4 +1,4 @@
-import type { DutyRateV1, Schedule1ParseResultV1, TariffLineContextV1, TariffLineV1 } from "./types.js";
+import { CUSTOMS_RATE_COLUMNS, type DutyRateV1, type Schedule1ParseResultV1, type TariffLineContextV1, type TariffLineV1 } from "./types.js";
 import { extractCustomsPdfTextItems, type CustomsPdfTextItem, type CustomsPdfTextPage } from "./pdf-text.js";
 
 export interface ParseSchedule1Part1PdfOptions {
@@ -50,7 +50,6 @@ const DEFAULT_LAYOUT: ColumnLayout = {
   afcfta: 759
 };
 
-const RATE_COLUMNS = ["general", "euUk", "efta", "sadc", "mercosur", "afcfta"] as const;
 const ROW_TOLERANCE = 2;
 const CONTINUATION_ROW_GAP = 18;
 
@@ -143,7 +142,7 @@ export function parseSchedule1Part1TextPages(
 
       if (pending && row.row - pending.lastRow <= CONTINUATION_ROW_GAP) {
         const continuation = readRowFields(row, layout);
-        if (continuation.description || RATE_COLUMNS.some((column) => continuation[column])) {
+        if (continuation.description || CUSTOMS_RATE_COLUMNS.some((column) => continuation[column])) {
           pending.continuationRows.push({ row, fields: continuation });
           pending.lastRow = row.row;
         }
@@ -298,7 +297,7 @@ function columnBounds(layout: ColumnLayout, column: ColumnName): [number, number
 function buildTariffLine(pending: PendingLine, sourceDocumentSha256: string, pageDate?: string): TariffLineV1 {
   const warnings: string[] = [];
   const descriptionParts = [pending.fields.description];
-  const rateParts: Record<(typeof RATE_COLUMNS)[number], string[]> = {
+  const rateParts: Record<(typeof CUSTOMS_RATE_COLUMNS)[number], string[]> = {
     general: [pending.fields.general],
     euUk: [pending.fields.euUk],
     efta: [pending.fields.efta],
@@ -311,7 +310,7 @@ function buildTariffLine(pending: PendingLine, sourceDocumentSha256: string, pag
     if (continuation.fields.description) {
       descriptionParts.push(continuation.fields.description);
     }
-    for (const column of RATE_COLUMNS) {
+    for (const column of CUSTOMS_RATE_COLUMNS) {
       if (continuation.fields[column]) {
         rateParts[column].push(continuation.fields[column]);
       }

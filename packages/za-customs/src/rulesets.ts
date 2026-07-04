@@ -11,9 +11,8 @@ import {
 import PackageJson from "../package.json" with { type: "json" };
 import { extractCustomsPdfTextItems } from "./pdf-text.js";
 import { parseSchedule1Part1TextPages } from "./schedule1-parser.js";
-import type { CustomsRulesetV1, Schedule1ParseResultV1, TariffLineV1 } from "./types.js";
+import { CUSTOMS_RATE_COLUMNS, type CustomsRulesetV1, type Schedule1ParseResultV1, type TariffLineV1 } from "./types.js";
 
-const RATE_COLUMNS = ["general", "euUk", "efta", "sadc", "mercosur", "afcfta"] as const;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 
 export interface BuildCustomsRulesetOptions {
@@ -374,12 +373,12 @@ function pick<T extends object, K extends keyof T>(value: T, keys: readonly K[])
 }
 
 function rateRawMap(line: TariffLineV1): Record<string, string | null> {
-  return Object.fromEntries(RATE_COLUMNS.map((column) => [column, line.rates[column]?.raw ?? null]));
+  return Object.fromEntries(CUSTOMS_RATE_COLUMNS.map((column) => [column, line.rates[column]?.raw ?? null]));
 }
 
 function rateComponentMap(line: TariffLineV1): Record<string, unknown> {
   return Object.fromEntries(
-    RATE_COLUMNS.map((column) => [
+    CUSTOMS_RATE_COLUMNS.map((column) => [
       column,
       line.rates[column]
         ? {

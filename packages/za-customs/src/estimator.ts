@@ -1,20 +1,19 @@
 import { findTariffLine } from "./rulesets.js";
-import type {
-  CustomsDutyEstimateV1,
-  CustomsRateColumnV1,
-  CustomsRateOptionV1,
-  DutyRateComponentV1,
-  DutyRateV1,
-  EstimateCustomsDutyOptionsV1,
-  TariffLineV1
+import {
+  CUSTOMS_RATE_COLUMNS,
+  type CustomsDutyEstimateV1,
+  type CustomsRateColumnV1,
+  type CustomsRateOptionV1,
+  type DutyRateComponentV1,
+  type DutyRateV1,
+  type EstimateCustomsDutyOptionsV1,
+  type TariffLineV1
 } from "./types.js";
-
-const RATE_COLUMNS = ["general", "euUk", "efta", "sadc", "mercosur", "afcfta"] as const;
 
 export function listRateOptions(ruleset: EstimateCustomsDutyOptionsV1["ruleset"], tariffCode: string): CustomsRateOptionV1[] {
   const line = findTariffLine(ruleset, tariffCode);
   if (!line) return [];
-  return RATE_COLUMNS.flatMap((column) => {
+  return CUSTOMS_RATE_COLUMNS.flatMap((column) => {
     const rate = line.rates[column];
     return rate ? [{ column, raw: rate.raw, kind: rate.kind, warnings: rate.warnings, sourceTrace: line.sourceTrace }] : [];
   });
