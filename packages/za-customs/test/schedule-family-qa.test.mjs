@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createSchedule1ExciseLeviesQaReport,
   createSchedule2QaReport,
   createSchedule3QaReport,
   createSchedule4QaReport,
   createSchedule5QaReport,
   createSchedule6QaReport,
+  parseSchedule1ExciseLeviesTextPages,
   parseSchedule2TradeRemediesTextPages,
   parseSchedule3IndustrialRebatesTextPages,
   parseSchedule4RebatesTextPages,
@@ -169,8 +171,54 @@ test("reports Schedule 6 lines missing both rebate and refund extent", () => {
   assert.equal(report.warnings.length, 1);
 });
 
-test("keeps parser-to-QA reports clean for complete Schedule 2-6 rows", () => {
+test("reports Schedule 1 excise levy lines missing rate", () => {
+  const report = createSchedule1ExciseLeviesQaReport(
+    parseSchedule1ExciseLeviesTextPages({
+      sourceDocumentSha256,
+      pages: [
+        page([
+          item("Date: 2025-04-01", 30, 36),
+          item("SCHEDULE 1 / PART 2B", 48, 36),
+          item("Tariff Item", 72, 39),
+          item("Tariff Subheading", 72, 115),
+          item("Article Description", 72, 210),
+          item("Rate of Excise Duty", 72, 702),
+          item("118.15.01", 126, 39),
+          item("3303.00.90", 126, 115),
+          item("Other", 126, 210)
+        ])
+      ]
+    })
+  );
+
+  assert.equal(report.schedule, "schedule1-excise-levies");
+  assert.equal(report.summary.lines, 1);
+  assert.equal(report.summary.lowConfidenceLines, 1);
+  assert.equal(report.summary.missingRequiredFields, 1);
+  assert.equal(report.issues.find((issue) => issue.category === "missing_required_field").field, "rate");
+});
+
+test("keeps parser-to-QA reports clean for complete schedule family rows", () => {
   const reports = [
+    createSchedule1ExciseLeviesQaReport(
+      parseSchedule1ExciseLeviesTextPages({
+        sourceDocumentSha256,
+        pages: [
+          page([
+            item("Date: 2025-04-01", 30, 36),
+            item("SCHEDULE 1 / PART 2B", 48, 36),
+            item("Tariff Item", 72, 39),
+            item("Tariff Subheading", 72, 115),
+            item("Article Description", 72, 210),
+            item("Rate of Excise Duty", 72, 702),
+            item("118.15.01", 126, 39),
+            item("3303.00.90", 126, 115),
+            item("Other", 126, 210),
+            item("9%", 126, 702)
+          ])
+        ]
+      })
+    ),
     createSchedule2QaReport(
       parseSchedule2TradeRemediesTextPages({
         sourceDocumentSha256,
@@ -290,7 +338,14 @@ test("keeps parser-to-QA reports clean for complete Schedule 2-6 rows", () => {
     )
   ];
 
-  assert.deepEqual(reports.map((report) => report.schedule), ["schedule2", "schedule3", "schedule4", "schedule5", "schedule6"]);
+  assert.deepEqual(reports.map((report) => report.schedule), [
+    "schedule1-excise-levies",
+    "schedule2",
+    "schedule3",
+    "schedule4",
+    "schedule5",
+    "schedule6"
+  ]);
   for (const report of reports) {
     assert.equal(report.summary.lines, 1);
     assert.deepEqual(report.issues, []);

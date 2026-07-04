@@ -1,4 +1,5 @@
 import type {
+  Schedule1ExciseLeviesParseResultV1,
   Schedule2ParseResultV1,
   Schedule3ParseResultV1,
   Schedule4ParseResultV1,
@@ -12,6 +13,7 @@ import type {
 import type { SourceTraceV1 } from "@openschedule/core";
 
 export type ScheduleFamilyQaSource =
+  | Schedule1ExciseLeviesParseResultV1
   | Schedule2ParseResultV1
   | Schedule3ParseResultV1
   | Schedule4ParseResultV1
@@ -165,12 +167,33 @@ export function createSchedule6QaReport(
   return createScheduleFamilyQaReport(source, options);
 }
 
+export function createSchedule1ExciseLeviesQaReport(
+  source: Schedule1ExciseLeviesParseResultV1,
+  options: CreateScheduleFamilyQaReportOptions = {}
+): ScheduleFamilyQaReportV1 {
+  return createScheduleFamilyQaReport(source, options);
+}
+
 function familyLines(source: ScheduleFamilyQaSource): {
   schedule: ScheduleFamilyV1;
   lines: QaLine[];
   pageMetrics?: PageMetric[];
 } {
   switch (source.schemaVersion) {
+    case "za-customs.schedule1-excise-levies-parse-result.v1":
+      return {
+        schedule: "schedule1-excise-levies",
+        lines: source.exciseLevyLines.map((line) => ({
+          schedule: "schedule1-excise-levies",
+          lineKey: [line.part, line.item, line.tariffSubheading].join(" / "),
+          normalizedLineKey: normalizeKey(line.part, line.normalizedItem, line.normalizedTariffSubheading),
+          sourceTrace: line.sourceTrace,
+          parseConfidence: line.parseConfidence,
+          warnings: line.warnings,
+          requiredFields: [{ name: "rate", value: line.rate.raw }]
+        })),
+        pageMetrics: source.pageMetrics
+      };
     case "za-customs.schedule2-parse-result.v1":
       return {
         schedule: "schedule2",

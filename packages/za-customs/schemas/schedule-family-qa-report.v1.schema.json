@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "openschedule://schemas/za-customs/schedule-family-qa-report.v1",
   "title": "Schedule Family QA Report V1",
-  "description": "Quality assurance report for SARS Schedule 2-6 parser output families.",
+  "description": "Quality assurance report for SARS schedule parser output families.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -54,7 +54,7 @@
   },
   "$defs": {
     "schedule": {
-      "enum": ["schedule2", "schedule3", "schedule4", "schedule5", "schedule6"]
+      "enum": ["schedule1-excise-levies", "schedule2", "schedule3", "schedule4", "schedule5", "schedule6"]
     },
     "issue": {
       "type": "object",

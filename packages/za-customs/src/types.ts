@@ -558,7 +558,13 @@ export interface Schedule1QaReportV1 {
   warnings: string[];
 }
 
-export type ScheduleFamilyV1 = "schedule2" | "schedule3" | "schedule4" | "schedule5" | "schedule6";
+export type ScheduleFamilyV1 =
+  | "schedule1-excise-levies"
+  | "schedule2"
+  | "schedule3"
+  | "schedule4"
+  | "schedule5"
+  | "schedule6";
 
 export type ScheduleFamilyQaIssueCategoryV1 =
   | "low_confidence_line"
