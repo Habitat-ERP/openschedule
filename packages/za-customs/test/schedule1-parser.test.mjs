@@ -48,6 +48,9 @@ test("parses tariff rows from positioned text with continuations and warnings", 
         item("SADC", 87, 640),
         item("MERCOSUR", 87, 692),
         item("AfCFTA", 87, 759),
+        item("1. This note is not a tariff context", 95, 39),
+        item("Cu - Copper", 98, 39),
+        item("0,4", 98, 142),
         item("00.01", 101, 39),
         item("Synthetic heading", 101, 142),
         item("only:", 115, 142),
@@ -112,9 +115,9 @@ test("parses tariff rows from positioned text with continuations and warnings", 
   });
 
   assert.equal(result.schemaVersion, "za-customs.schedule1-parse-result.v1");
-  assert.equal(result.metrics.candidateRows, 7);
+  assert.equal(result.metrics.candidateRows, 9);
   assert.equal(result.metrics.contextRows, 2);
-  assert.equal(result.metrics.rejectedRows, 0);
+  assert.equal(result.metrics.rejectedRows, 2);
   assert.equal(result.tariffLines.length, 5);
   assert.equal(result.tariffLines[0].tariffCode, "0001.10");
   assert.equal(result.tariffLines[0].normalizedTariffCode, "000110");

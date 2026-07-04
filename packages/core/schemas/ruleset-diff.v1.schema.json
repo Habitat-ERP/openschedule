@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/core/ruleset-diff.v1",
+  "title": "Ruleset Diff V1",
+  "description": "A compact, source-aware diff between two generated rulesets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "changes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "core.ruleset-diff.v1"
+    },
+    "beforeRulesetId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "afterRulesetId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rulesetDiffChange"
+      }
+    }
+  },
+  "$defs": {
+    "rulesetDiffChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "category"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "core.ruleset-diff-change.v1"
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "before": true,
+        "after": true,
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    }
+  }
+}

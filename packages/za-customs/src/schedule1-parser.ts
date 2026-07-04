@@ -105,7 +105,12 @@ export function parseSchedule1Part1TextPages(
         metrics.candidateRows += 1;
         if (isHierarchyContext(row, layout, fields)) {
           const context = buildTariffLineContext(row, layout, fields, options.sourceDocumentSha256);
-          activeContexts = [...activeContexts.filter((item) => item.level < context.level), context];
+          activeContexts = [
+            ...activeContexts.filter(
+              (item) => item.level < context.level && context.normalizedCode.startsWith(item.normalizedCode)
+            ),
+            context
+          ];
           pendingContext = {
             context,
             rows: [row],
@@ -126,7 +131,9 @@ export function parseSchedule1Part1TextPages(
           pageNumber: page.pageNumber,
           row,
           fields,
-          context: activeContexts,
+          context: activeContexts.filter((context) =>
+            fields.tariffCode.replace(/\D/g, "").startsWith(context.normalizedCode)
+          ),
           continuationRows: [],
           lastRow: row.row
         };
@@ -490,12 +497,16 @@ function isTariffCandidate(fields: RowFields): boolean {
 }
 
 function isHierarchyContext(row: LayoutRow, layout: ColumnLayout, fields: RowFields): boolean {
-  return Boolean(fields.tariffCode && !fields.checkDigit && readContextDescription(row, layout));
+  return Boolean(isHierarchyCode(fields.tariffCode) && !fields.checkDigit && readContextDescription(row, layout));
 }
 
 function isTariffCode(value: string): boolean {
   const normalized = value.replace(/\D/g, "");
   return /^\d{4}(?:\.\d{2}){1,2}$/.test(value) && normalized.length >= 6;
+}
+
+function isHierarchyCode(value: string): boolean {
+  return /^(?:\d{2}\.\d{2}|\d{4}\.\d{1,2})$/.test(value);
 }
 
 function extractPageDate(items: readonly CustomsPdfTextItem[]): string | undefined {

@@ -57,6 +57,7 @@ export interface TariffLineV1 {
 export interface CustomsRulesetV1 {
   schemaVersion: "za-customs.customs-ruleset.v1";
   manifest: RulesetManifestV1;
+  parseMetrics: Schedule1ParseMetricsV1;
   tariffLines: TariffLineV1[];
 }
 

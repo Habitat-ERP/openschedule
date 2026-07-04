@@ -29,3 +29,37 @@ export interface RulesetManifestV1 {
   };
   warnings: string[];
 }
+
+export type ValidationSeverityV1 = "error" | "warning";
+
+export interface ValidationIssueV1 {
+  schemaVersion: "core.validation-issue.v1";
+  severity: ValidationSeverityV1;
+  code: string;
+  message: string;
+  path?: string | null;
+}
+
+export interface ValidationReportV1 {
+  schemaVersion: "core.validation-report.v1";
+  valid: boolean;
+  issues: ValidationIssueV1[];
+}
+
+export interface RulesetDiffChangeV1 {
+  schemaVersion: "core.ruleset-diff-change.v1";
+  category: string;
+  path?: string | null;
+  key?: string | null;
+  label?: string | null;
+  before?: unknown;
+  after?: unknown;
+  sourceTrace?: SourceTraceV1[];
+}
+
+export interface RulesetDiffV1 {
+  schemaVersion: "core.ruleset-diff.v1";
+  beforeRulesetId?: string | null;
+  afterRulesetId?: string | null;
+  changes: RulesetDiffChangeV1[];
+}

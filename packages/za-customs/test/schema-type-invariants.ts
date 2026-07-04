@@ -53,6 +53,15 @@ const tariffLine = {
 const ruleset = {
   schemaVersion: "za-customs.customs-ruleset.v1",
   manifest,
+  parseMetrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 0,
+    tariffLines: 1,
+    rejectedRows: 0
+  },
   tariffLines: [tariffLine]
 } satisfies CustomsRulesetV1;
 
