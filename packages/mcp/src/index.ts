@@ -13,8 +13,10 @@ import {
   ValidationReportV1Schema
 } from "@openschedule/core";
 import {
+  CustomsSourceStatusV1Schema,
   CustomsSourceV1Schema,
   FetchedCustomsSourceV1Schema,
+  checkCustomsSources,
   discoverCustomsSources,
   fetchCustomsSources
 } from "@openschedule/za-sars";
@@ -59,6 +61,7 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/core/source-trace.v1": SourceTraceV1Schema,
   "openschedule://schemas/core/validation-report.v1": ValidationReportV1Schema,
   "openschedule://schemas/za-sars/customs-source.v1": CustomsSourceV1Schema,
+  "openschedule://schemas/za-sars/customs-source-status.v1": CustomsSourceStatusV1Schema,
   "openschedule://schemas/za-sars/fetched-customs-source.v1": FetchedCustomsSourceV1Schema,
   "openschedule://schemas/za-customs/duty-estimate.v1": CustomsDutyEstimateV1Schema,
   "openschedule://schemas/za-customs/customs-ruleset.v1": CustomsRulesetV1Schema,
@@ -81,6 +84,14 @@ const TOOLS = [
       outDir: { type: "string", minLength: 1 }
     }
   }, false),
+  tool("check_source_status", "Check declared official sources against a local fetched source cache.", {
+    type: "object",
+    additionalProperties: false,
+    required: ["cacheDir"],
+    properties: {
+      cacheDir: { type: "string", minLength: 1 }
+    }
+  }, true),
   tool("build_ruleset", "Build a customs ruleset from one PDF path or one direct PDF inside a source directory.", {
     type: "object",
     additionalProperties: false,
@@ -214,6 +225,8 @@ async function callTool(params: unknown, runtime: McpRuntime): Promise<JsonObjec
       return toolResult(discoverCustomsSources());
     case "fetch_sources":
       return toolResult(await fetchCustomsSources({ outDir: stringParam(args.outDir, "outDir"), fetch: runtime.fetch }));
+    case "check_source_status":
+      return toolResult(await checkCustomsSources({ cacheDir: stringParam(args.cacheDir, "cacheDir"), fetch: runtime.fetch }));
     case "build_ruleset":
       return toolResult(await buildRuleset(args));
     case "validate_ruleset":

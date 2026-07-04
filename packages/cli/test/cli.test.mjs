@@ -120,22 +120,28 @@ test("fetches SARS customs source with an injected fetch implementation", async 
     };
 
     const result = await invoke(["fetch", "za-sars", "customs", "--out", dir], { fetch });
+    const status = await invoke(["status", "za-sars", "customs", "--cache", dir], { fetch });
 
     assert.equal(result.exitCode, 0);
     assert.equal(requests[0].init.method, "GET");
     assert.equal(result.json[0].bytes, responseBytes.byteLength);
     assert.equal(await readFile(result.json[0].documentPath, "utf8"), responseBytes.toString("utf8"));
+    assert.equal(status.exitCode, 0);
+    assert.equal(status.json[0].status, "unchanged");
+    assert.ok(status.json.some((item) => item.status === "manual-review"));
   });
 });
 
 test("outputs schemas by group and schema name", async () => {
   const all = await invoke(["schemas", "za-customs"]);
   const one = await invoke(["schemas", "za-customs", "tariff-line"]);
+  const status = await invoke(["schemas", "za-sars", "customs-source-status"]);
 
   assert.equal(all.exitCode, 0);
   assert.equal(all.json["tariff-line"].properties.schemaVersion.const, "za-customs.tariff-line.v1");
   assert.equal(all.json["schedule1-qa-report"].properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
   assert.equal(one.json.properties.schemaVersion.const, "za-customs.tariff-line.v1");
+  assert.equal(status.json.properties.schemaVersion.const, "za-sars.customs-source-status.v1");
 });
 
 test("looks up tariff lines and lists available rates", async () => {

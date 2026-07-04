@@ -13,8 +13,10 @@ import {
   ValidationReportV1Schema
 } from "@openschedule/core";
 import {
+  CustomsSourceStatusV1Schema,
   discoverCustomsSources,
   fetchCustomsSources,
+  checkCustomsSources,
   CustomsSourceV1Schema,
   FetchedCustomsSourceV1Schema
 } from "@openschedule/za-sars";
@@ -70,6 +72,9 @@ export async function runCli(args = process.argv.slice(2), runtime: CliRuntime =
       case "fetch":
         writeJson(stdout, await runFetch(rest, runtime.fetch));
         return 0;
+      case "status":
+        writeJson(stdout, await runStatus(rest, runtime.fetch));
+        return 0;
       case "build":
         writeJson(stdout, await runBuild(rest));
         return 0;
@@ -119,6 +124,14 @@ async function runFetch(args: string[], fetcher?: typeof fetch): Promise<unknown
   requirePositionals(positionals, ["za-sars", "customs"], "fetch za-sars customs --out <dir>");
   const outDir = stringOption(values.out, "--out");
   return fetchCustomsSources({ outDir, fetch: fetcher });
+}
+
+async function runStatus(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    cache: { type: "string" }
+  });
+  requirePositionals(positionals, ["za-sars", "customs"], "status za-sars customs --cache <dir>");
+  return checkCustomsSources({ cacheDir: stringOption(values.cache, "--cache"), fetch: fetcher });
 }
 
 async function runBuild(args: string[]): Promise<CustomsRulesetV1> {
@@ -407,6 +420,7 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
     },
     "za-sars": {
       "customs-source": CustomsSourceV1Schema,
+      "customs-source-status": CustomsSourceStatusV1Schema,
       "fetched-customs-source": FetchedCustomsSourceV1Schema
     },
     "za-customs": {
@@ -423,6 +437,7 @@ function usage(): string {
   return `Usage:
   openschedule discover za-sars customs
   openschedule fetch za-sars customs --out <dir>
+  openschedule status za-sars customs --cache <dir>
   openschedule build za-customs --sources <dir|pdf> --out <file> [--effective-date YYYY-MM-DD] [--pages 1,2]
   openschedule diff <old-ruleset.json> <new-ruleset.json>
   openschedule lookup <ruleset.json> --tariff-code <code>

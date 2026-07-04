@@ -5,7 +5,9 @@ import { tmpdir } from "node:os";
 import test from "node:test";
 import {
   CustomsSourceV1Schema,
+  CustomsSourceStatusV1Schema,
   FetchedCustomsSourceV1Schema,
+  checkCustomsSources,
   discoverCustomsSourceGroups,
   discoverCustomsSources,
   fetchCustomsSources
@@ -19,6 +21,11 @@ test("exports source schemas", () => {
     FetchedCustomsSourceV1Schema.properties.schemaVersion.const,
     "za-sars.fetched-customs-source.v1"
   );
+  assert.equal(
+    CustomsSourceStatusV1Schema.properties.schemaVersion.const,
+    "za-sars.customs-source-status.v1"
+  );
+  assert.ok(CustomsSourceStatusV1Schema.properties.status.enum.includes("manual-review"));
 });
 
 test("discovers SARS customs source families", () => {
@@ -79,6 +86,87 @@ test("rejects non-PDF sources passed to fetch", async () => {
       fetchCustomsSources({ outDir, sources: [htmlSource], fetch: async () => new Response("ok") }),
       /Cannot fetch non-PDF source/
     );
+  } finally {
+    await rm(outDir, { recursive: true, force: true });
+  }
+});
+
+test("checks unchanged source status from fetched metadata and cache directory", async () => {
+  const outDir = await mkdtemp(join(tmpdir(), "openschedule-za-sars-"));
+  try {
+    const source = discoverCustomsSources().find((item) => item.sourceFormat === "application/pdf");
+    assert.ok(source);
+    const responseBytes = Buffer.from("%PDF-1.7\nsame\n");
+    const fetch = async () =>
+      new Response(responseBytes, {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf"
+        }
+      });
+
+    const fetched = await fetchCustomsSources({ outDir, sources: [source], fetch });
+    const fromFetched = await checkCustomsSources({ sources: [source], fetched, fetch });
+    const fromCache = await checkCustomsSources({ sources: [source], cacheDir: outDir, fetch });
+
+    assert.equal(fromFetched[0].schemaVersion, "za-sars.customs-source-status.v1");
+    assert.equal(fromFetched[0].status, "unchanged");
+    assert.equal(fromFetched[0].local.sha256, fetched[0].document.sha256);
+    assert.equal(fromFetched[0].official.bytes, responseBytes.byteLength);
+    assert.equal(fromCache[0].status, "unchanged");
+  } finally {
+    await rm(outDir, { recursive: true, force: true });
+  }
+});
+
+test("checks changed, missing, failed, non-PDF, and registry-page statuses", async () => {
+  const outDir = await mkdtemp(join(tmpdir(), "openschedule-za-sars-"));
+  try {
+    const source = discoverCustomsSources().find((item) => item.sourceFormat === "application/pdf");
+    const registry = discoverCustomsSources().find((item) => item.sourceFormat === "text/html");
+    assert.ok(source);
+    assert.ok(registry);
+    const fetched = await fetchCustomsSources({
+      outDir,
+      sources: [source],
+      fetch: async () => new Response(Buffer.from("%PDF-1.7\nold\n"), { headers: { "content-type": "application/pdf" } })
+    });
+
+    const changed = await checkCustomsSources({
+      sources: [source],
+      fetched,
+      fetch: async () => new Response(Buffer.from("%PDF-1.7\nnew\n"), { headers: { "content-type": "application/pdf" } })
+    });
+    const missing = await checkCustomsSources({ sources: [source] });
+    const failed = await checkCustomsSources({
+      sources: [source],
+      fetched,
+      fetch: async () => new Response("nope", { status: 500, headers: { "content-type": "application/pdf" } })
+    });
+    const nonPdf = await checkCustomsSources({
+      sources: [source],
+      fetched,
+      fetch: async () => new Response("<html></html>", { headers: { "content-type": "text/html" } })
+    });
+    const registryStatus = await checkCustomsSources({ sources: [registry] });
+    const descriptorChanged = await checkCustomsSources({
+      sources: [source],
+      fetched: [{ ...fetched[0], source: { ...source, sourceUpdatedDate: "2000-01-01" } }],
+      fetch: async () => {
+        throw new Error("descriptor change should not fetch");
+      }
+    });
+
+    assert.equal(changed[0].status, "changed");
+    assert.match(changed[0].reasons[0], /hash differs/);
+    assert.equal(missing[0].status, "missing");
+    assert.equal(failed[0].status, "failed");
+    assert.match(failed[0].reasons[0], /HTTP 500/);
+    assert.equal(nonPdf[0].status, "failed");
+    assert.match(nonPdf[0].reasons[0], /Expected PDF/);
+    assert.equal(registryStatus[0].status, "manual-review");
+    assert.equal(descriptorChanged[0].status, "changed");
+    assert.match(descriptorChanged[0].reasons[0], /updated date changed/);
   } finally {
     await rm(outDir, { recursive: true, force: true });
   }

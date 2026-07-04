@@ -1,5 +1,5 @@
 import type { SourceDocumentMetadataV1 } from "@openschedule/core";
-import type { FetchedCustomsSourceV1, SarsCustomsSourceV1 } from "../src/index.js";
+import type { FetchedCustomsSourceV1, SarsCustomsSourceStatusV1, SarsCustomsSourceV1 } from "../src/index.js";
 
 const source = {
   schemaVersion: "za-sars.customs-source.v1",
@@ -39,4 +39,29 @@ const fetched = {
   warnings: []
 } satisfies FetchedCustomsSourceV1;
 
+const status = {
+  schemaVersion: "za-sars.customs-source-status.v1",
+  source,
+  status: "unchanged",
+  checkedAt: "2026-07-04T00:00:00.000Z",
+  local: {
+    documentPath: "/tmp/synthetic-source.pdf",
+    metadataPath: "/tmp/synthetic-source.pdf.metadata.json",
+    sha256: document.sha256,
+    sourceUrl: source.sourceUrl,
+    sourceUpdatedDate: source.sourceUpdatedDate
+  },
+  official: {
+    sourceUrl: source.sourceUrl,
+    sourceUpdatedDate: source.sourceUpdatedDate,
+    statusCode: 200,
+    contentType: "application/pdf",
+    sha256: document.sha256,
+    bytes: 20
+  },
+  reasons: [],
+  warnings: []
+} satisfies SarsCustomsSourceStatusV1;
+
 void fetched;
+void status;

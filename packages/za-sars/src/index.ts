@@ -1,4 +1,6 @@
-import { mkdir, rename, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { constants } from "node:fs";
+import { access, mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   createSourceDocumentMetadata,
@@ -51,6 +53,13 @@ export interface FetchCustomsSourcesOptions {
   fetch?: typeof fetch;
 }
 
+export interface CheckCustomsSourcesOptions {
+  sources?: readonly SarsCustomsSourceV1[];
+  fetched?: readonly FetchedCustomsSourceV1[];
+  cacheDir?: string;
+  fetch?: typeof fetch;
+}
+
 export interface FetchedCustomsSourceV1 {
   schemaVersion: "za-sars.fetched-customs-source.v1";
   source: SarsCustomsSourceV1;
@@ -58,6 +67,36 @@ export interface FetchedCustomsSourceV1 {
   documentPath: string;
   metadataPath: string;
   bytes: number;
+  warnings: string[];
+}
+
+export type SarsCustomsSourceStatusKindV1 = "unchanged" | "changed" | "missing" | "failed" | "manual-review";
+
+export interface SarsCustomsSourceStatusLocalV1 {
+  documentPath: string | null;
+  metadataPath: string | null;
+  sha256: string | null;
+  sourceUrl: string | null;
+  sourceUpdatedDate: string | null;
+}
+
+export interface SarsCustomsSourceStatusOfficialV1 {
+  sourceUrl: string;
+  sourceUpdatedDate: string | null;
+  statusCode: number | null;
+  contentType: string | null;
+  sha256: string | null;
+  bytes: number | null;
+}
+
+export interface SarsCustomsSourceStatusV1 {
+  schemaVersion: "za-sars.customs-source-status.v1";
+  source: SarsCustomsSourceV1;
+  status: SarsCustomsSourceStatusKindV1;
+  checkedAt: string;
+  local: SarsCustomsSourceStatusLocalV1 | null;
+  official: SarsCustomsSourceStatusOfficialV1 | null;
+  reasons: string[];
   warnings: string[];
 }
 
@@ -416,4 +455,245 @@ export async function fetchCustomsSources(
   }
 
   return fetched;
+}
+
+interface LocalCustomsSource {
+  source: SarsCustomsSourceV1 | null;
+  document: SourceDocumentMetadataV1;
+  documentPath: string | null;
+  metadataPath: string | null;
+}
+
+class CustomsSourceCheckError extends Error {
+  constructor(
+    message: string,
+    readonly official: SarsCustomsSourceStatusOfficialV1
+  ) {
+    super(message);
+  }
+}
+
+export async function checkCustomsSources(
+  options: CheckCustomsSourcesOptions = {}
+): Promise<SarsCustomsSourceStatusV1[]> {
+  const sources = options.sources ?? discoverCustomsSources();
+  const fetcher = options.fetch ?? globalThis.fetch;
+  const checkedAt = new Date().toISOString();
+  const localSources = [
+    ...(options.fetched ?? []).map(localFromFetchedSource),
+    ...(options.cacheDir ? await readCachedSources(options.cacheDir) : [])
+  ];
+  const statuses: SarsCustomsSourceStatusV1[] = [];
+
+  for (const source of sources) {
+    if (source.sourceFormat !== "application/pdf") {
+      statuses.push(status(source, "manual-review", checkedAt, null, officialFromSource(source), [
+        "HTML registry pages are declared sources but are not cached as fetched documents yet."
+      ]));
+      continue;
+    }
+
+    const matches = localSources.filter((local) => localMatchesSource(local, source));
+    if (!matches.length) {
+      statuses.push(status(source, "missing", checkedAt, null, officialFromSource(source), ["No local fetched metadata matched this source."]));
+      continue;
+    }
+    if (matches.length > 1) {
+      statuses.push(status(source, "manual-review", checkedAt, null, officialFromSource(source), [
+        "Multiple local fetched metadata files matched this source."
+      ]));
+      continue;
+    }
+
+    const local = matches[0];
+    const localSummary = localStatus(local, source);
+    if (!local.documentPath || !(await pathExists(local.documentPath))) {
+      statuses.push(status(source, "missing", checkedAt, localSummary, officialFromSource(source), ["Local fetched document is absent."]));
+      continue;
+    }
+
+    const descriptorReasons = descriptorChangeReasons(source, local);
+    if (descriptorReasons.length) {
+      statuses.push(status(source, "changed", checkedAt, localSummary, officialFromSource(source), descriptorReasons));
+      continue;
+    }
+
+    try {
+      const official = await fetchOfficialPdfStatus(source, fetcher);
+      const unchanged = official.sha256 === local.document.sha256;
+      statuses.push(
+        status(
+          source,
+          unchanged ? "unchanged" : "changed",
+          checkedAt,
+          localSummary,
+          official,
+          unchanged ? [] : ["Official source bytes hash differs from local fetched metadata."]
+        )
+      );
+    } catch (error) {
+      statuses.push(
+        status(source, "failed", checkedAt, localSummary, errorOfficial(source, error), [
+          error instanceof Error ? error.message : String(error)
+        ])
+      );
+    }
+  }
+
+  return statuses;
+}
+
+function status(
+  source: SarsCustomsSourceV1,
+  sourceStatus: SarsCustomsSourceStatusKindV1,
+  checkedAt: string,
+  local: SarsCustomsSourceStatusLocalV1 | null,
+  official: SarsCustomsSourceStatusOfficialV1 | null,
+  reasons: string[],
+  warnings: string[] = []
+): SarsCustomsSourceStatusV1 {
+  return {
+    schemaVersion: "za-sars.customs-source-status.v1",
+    source,
+    status: sourceStatus,
+    checkedAt,
+    local,
+    official,
+    reasons,
+    warnings
+  };
+}
+
+function localFromFetchedSource(fetched: FetchedCustomsSourceV1): LocalCustomsSource {
+  return {
+    source: fetched.source,
+    document: fetched.document,
+    documentPath: fetched.documentPath,
+    metadataPath: fetched.metadataPath
+  };
+}
+
+async function readCachedSources(cacheDir: string): Promise<LocalCustomsSource[]> {
+  const locals: LocalCustomsSource[] = [];
+  for (const entry of await readdir(cacheDir)) {
+    if (!entry.endsWith(".metadata.json")) continue;
+    const metadataPath = join(cacheDir, entry);
+    const document = parseSourceDocumentMetadata(await readFile(metadataPath, "utf8"));
+    if (!document) continue;
+    locals.push({
+      source: null,
+      document,
+      documentPath: document.fileName ? join(cacheDir, document.fileName) : metadataPath.slice(0, -".metadata.json".length),
+      metadataPath
+    });
+  }
+  return locals;
+}
+
+function parseSourceDocumentMetadata(json: string): SourceDocumentMetadataV1 | null {
+  try {
+    const value = JSON.parse(json) as Partial<SourceDocumentMetadataV1>;
+    if (value.schemaVersion !== "core.source-document-metadata.v1") return null;
+    if (typeof value.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(value.sha256)) return null;
+    return value as SourceDocumentMetadataV1;
+  } catch {
+    return null;
+  }
+}
+
+function localMatchesSource(local: LocalCustomsSource, source: SarsCustomsSourceV1): boolean {
+  if (local.source?.id === source.id) return true;
+  if (local.document.sourceUrl === source.sourceUrl) return true;
+  return Boolean(local.document.fileName?.startsWith(`${source.id}_`));
+}
+
+function localStatus(local: LocalCustomsSource, source: SarsCustomsSourceV1): SarsCustomsSourceStatusLocalV1 {
+  return {
+    documentPath: local.documentPath,
+    metadataPath: local.metadataPath,
+    sha256: local.document.sha256,
+    sourceUrl: local.source?.sourceUrl ?? local.document.sourceUrl ?? null,
+    sourceUpdatedDate: local.source?.sourceUpdatedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id)
+  };
+}
+
+function descriptorChangeReasons(source: SarsCustomsSourceV1, local: LocalCustomsSource): string[] {
+  const reasons: string[] = [];
+  const localSourceUrl = local.source?.sourceUrl ?? local.document.sourceUrl ?? null;
+  const localUpdatedDate = local.source?.sourceUpdatedDate ?? sourceUpdatedDateFromFileName(local.document.fileName, source.id);
+
+  if (localSourceUrl && localSourceUrl !== source.sourceUrl) {
+    reasons.push("Source URL changed since the local fetched metadata was written.");
+  }
+  if ((localUpdatedDate ?? null) !== (source.sourceUpdatedDate ?? null)) {
+    reasons.push("Source updated date changed since the local fetched metadata was written.");
+  }
+  return reasons;
+}
+
+function sourceUpdatedDateFromFileName(fileName: string | null | undefined, sourceId: string): string | null {
+  const prefix = `${sourceId}_`;
+  if (!fileName?.startsWith(prefix)) return null;
+  const value = fileName.slice(prefix.length, prefix.length + 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
+async function fetchOfficialPdfStatus(
+  source: SarsCustomsSourceV1,
+  fetcher: typeof fetch
+): Promise<SarsCustomsSourceStatusOfficialV1> {
+  const response = await fetcher(source.sourceUrl, {
+    method: "GET",
+    headers: {
+      accept: "application/pdf,*/*;q=0.8"
+    }
+  });
+  const official = officialFromSource(source, response.status, response.headers.get("content-type"));
+  if (!response.ok) {
+    throw new CustomsSourceCheckError(`Failed to fetch ${source.sourceUrl}: HTTP ${response.status}`, official);
+  }
+  if (!official.contentType?.toLowerCase().includes("pdf")) {
+    throw new CustomsSourceCheckError(
+      `Expected PDF from ${source.sourceUrl}, got ${official.contentType || "unknown content type"}`,
+      official
+    );
+  }
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (!bytes.subarray(0, 4).equals(Buffer.from("%PDF"))) {
+    throw new CustomsSourceCheckError(`Expected PDF bytes from ${source.sourceUrl}`, { ...official, bytes: bytes.byteLength });
+  }
+  return {
+    ...official,
+    bytes: bytes.byteLength,
+    sha256: createHash("sha256").update(bytes).digest("hex")
+  };
+}
+
+function officialFromSource(
+  source: SarsCustomsSourceV1,
+  statusCode: number | null = null,
+  contentType: string | null = null
+): SarsCustomsSourceStatusOfficialV1 {
+  return {
+    sourceUrl: source.sourceUrl,
+    sourceUpdatedDate: source.sourceUpdatedDate ?? null,
+    statusCode,
+    contentType,
+    sha256: null,
+    bytes: null
+  };
+}
+
+function errorOfficial(source: SarsCustomsSourceV1, error: unknown): SarsCustomsSourceStatusOfficialV1 {
+  return error instanceof CustomsSourceCheckError ? error.official : officialFromSource(source);
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }

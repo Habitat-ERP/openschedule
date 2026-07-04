@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-sars/customs-source-status.v1",
+  "title": "SARS Customs Source Status V1",
+  "description": "Status check result for one declared SARS customs source against local fetched metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "source",
+    "status",
+    "checkedAt",
+    "local",
+    "official",
+    "reasons",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-sars.customs-source-status.v1"
+    },
+    "source": {
+      "$ref": "openschedule://schemas/za-sars/customs-source.v1"
+    },
+    "status": {
+      "enum": [
+        "unchanged",
+        "changed",
+        "missing",
+        "failed",
+        "manual-review"
+      ]
+    },
+    "checkedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "local": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "documentPath",
+            "metadataPath",
+            "sha256",
+            "sourceUrl",
+            "sourceUpdatedDate"
+          ],
+          "properties": {
+            "documentPath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "metadataPath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "sourceUrl": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            },
+            "sourceUpdatedDate": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        }
+      ]
+    },
+    "official": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sourceUrl",
+            "sourceUpdatedDate",
+            "statusCode",
+            "contentType",
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sourceUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "sourceUpdatedDate": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "statusCode": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 100
+            },
+            "contentType": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
