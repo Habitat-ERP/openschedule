@@ -73,6 +73,33 @@ export interface CustomsDutyEstimateV1 {
   warnings: string[];
 }
 
+export type CustomsRateColumnV1 = "general" | "euUk" | "efta" | "sadc" | "mercosur" | "afcfta";
+
+export interface CustomsRateOptionV1 {
+  column: CustomsRateColumnV1;
+  raw: string;
+  kind: DutyRateKindV1;
+  warnings: string[];
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface CustomsPreferenceClaimV1 {
+  agreement: Exclude<CustomsRateColumnV1, "general">;
+  originCountry?: string | null;
+  proof?: Record<string, unknown> | null;
+}
+
+export interface EstimateCustomsDutyOptionsV1 {
+  ruleset: CustomsRulesetV1;
+  tariffCode: string;
+  customsValue?: number | null;
+  quantity?: number | null;
+  quantityUnit?: string | null;
+  effectiveDate: string;
+  rateColumn?: CustomsRateColumnV1;
+  preferenceClaim?: CustomsPreferenceClaimV1 | null;
+}
+
 export interface Schedule1ParseMetricsV1 {
   pagesParsed: number;
   textItems: number;
