@@ -82,6 +82,37 @@ test("parses Schedule 6 excise rebate and refund rows with continuations and con
   assert.equal(result.exciseRebateRefundLines[1].validFrom, "2026-07-01");
 });
 
+test("keeps Schedule 6 rows missing rebate and refund extent visible for QA", () => {
+  const result = parseSchedule6ExciseRebatesRefundsTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2026-07-01", 30, 36),
+        item("SCHEDULE 6 / PART 1B", 48, 36),
+        item("Rebate Item", 72, 39),
+        item("Tariff Item", 72, 96),
+        item("Rebate Code", 72, 153),
+        item("CD", 72, 215),
+        item("Description", 72, 238),
+        item("Extent of Rebate", 72, 581),
+        item("Extent of Refund", 72, 695),
+        item("619.01", 111, 39),
+        item("104.10.10", 111, 96),
+        item("01.01", 111, 153),
+        item("76", 111, 215),
+        item("Traditional African Beer", 111, 238)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.exciseRebateRefundLines.length, 1);
+  assert.equal(result.exciseRebateRefundLines[0].extentOfRebate, "");
+  assert.equal(result.exciseRebateRefundLines[0].extentOfRefund, "");
+  assert.ok(result.exciseRebateRefundLines[0].warnings.includes("Missing extent of rebate or refund."));
+  assert.ok(result.exciseRebateRefundLines[0].parseConfidence < 1);
+});
+
 test("optionally parses the live cached SARS Schedule 6 PDF when OPENSCHEDULE_SARS_SCHEDULE6_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE6_PDF_PATH;
   if (!pdfPath) {

@@ -7,6 +7,7 @@ import Schedule4ParseResultV1SchemaJson from "../schemas/schedule4-parse-result.
 import Schedule5ParseResultV1SchemaJson from "../schemas/schedule5-parse-result.v1.schema.json" with { type: "json" };
 import Schedule6ParseResultV1SchemaJson from "../schemas/schedule6-parse-result.v1.schema.json" with { type: "json" };
 import Schedule1QaReportV1SchemaJson from "../schemas/schedule1-qa-report.v1.schema.json" with { type: "json" };
+import ScheduleFamilyQaReportV1SchemaJson from "../schemas/schedule-family-qa-report.v1.schema.json" with { type: "json" };
 import TariffLineV1SchemaJson from "../schemas/tariff-line.v1.schema.json" with { type: "json" };
 
 export const CustomsDutyEstimateV1Schema = CustomsDutyEstimateV1SchemaJson;
@@ -18,4 +19,5 @@ export const Schedule4ParseResultV1Schema = Schedule4ParseResultV1SchemaJson;
 export const Schedule5ParseResultV1Schema = Schedule5ParseResultV1SchemaJson;
 export const Schedule6ParseResultV1Schema = Schedule6ParseResultV1SchemaJson;
 export const Schedule1QaReportV1Schema = Schedule1QaReportV1SchemaJson;
+export const ScheduleFamilyQaReportV1Schema = ScheduleFamilyQaReportV1SchemaJson;
 export const TariffLineV1Schema = TariffLineV1SchemaJson;

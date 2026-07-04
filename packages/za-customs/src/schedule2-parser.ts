@@ -413,9 +413,7 @@ function isTradeRemedyCandidate(fields: RowFields): boolean {
     isSchedule2Item(fields.item) &&
       looksLikeDottedNumber(fields.tariffHeading) &&
       looksLikeDottedNumber(fields.code) &&
-      fields.description &&
-      fields.originatingCountry &&
-      fields.rate
+      fields.description
   );
 }
 

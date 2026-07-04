@@ -90,6 +90,37 @@ test("parses Schedule 2 trade remedy rows with continuations and context", () =>
   assert.equal(result.tradeRemedyLines[1].validFrom, "2026-06-12");
 });
 
+test("keeps Schedule 2 rows missing origin and rate visible for QA", () => {
+  const result = parseSchedule2TradeRemediesTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2026-06-12", 30, 36),
+        item("Item", 72, 39),
+        item("Tariff Heading", 72, 82),
+        item("Code", 72, 146),
+        item("CD", 72, 190),
+        item("Description", 72, 210),
+        item("Imported from or", 72, 617),
+        item("Rate of Anti-dumping", 72, 702),
+        item("201.02", 126, 39),
+        item("0207.14.9", 126, 82),
+        item("03.07", 126, 146),
+        item("70", 126, 190),
+        item("Frozen meat of fowls", 126, 210)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.tradeRemedyLines.length, 1);
+  assert.equal(result.tradeRemedyLines[0].originatingCountryOrTerritory, "");
+  assert.equal(result.tradeRemedyLines[0].rate.kind, "unknown");
+  assert.ok(result.tradeRemedyLines[0].warnings.includes("Missing originating country or territory."));
+  assert.ok(result.tradeRemedyLines[0].warnings.includes("Missing anti-dumping duty rate."));
+  assert.ok(result.tradeRemedyLines[0].parseConfidence < 1);
+});
+
 test("optionally parses the live cached SARS Schedule 2 PDF when OPENSCHEDULE_SARS_SCHEDULE2_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE2_PDF_PATH;
   if (!pdfPath) {

@@ -2,6 +2,7 @@ import type { RulesetManifestV1, SourceTraceV1 } from "@openschedule/core";
 import type {
   CustomsDutyEstimateV1,
   CustomsRulesetV1,
+  ScheduleFamilyQaReportV1,
   Schedule1QaReportV1,
   Schedule2ParseResultV1,
   Schedule3ParseResultV1,
@@ -115,6 +116,22 @@ const qaReport = {
   reviewSet: [],
   warnings: []
 } satisfies Schedule1QaReportV1;
+
+const scheduleFamilyQaReport = {
+  schemaVersion: "za-customs.schedule-family-qa-report.v1",
+  schedule: "schedule2",
+  summary: {
+    lines: 1,
+    lowConfidenceLines: 0,
+    continuationRows: 0,
+    duplicateNormalizedFamilyKeys: 0,
+    linesMissingSourceTrace: 0,
+    missingRequiredFields: 0,
+    pagesWithHighRejectionCounts: 0
+  },
+  issues: [],
+  warnings: []
+} satisfies ScheduleFamilyQaReportV1;
 
 const schedule2ParseResult = {
   schemaVersion: "za-customs.schedule2-parse-result.v1",
@@ -339,6 +356,7 @@ const schedule6ParseResult = {
 
 void estimate;
 void qaReport;
+void scheduleFamilyQaReport;
 void schedule2ParseResult;
 void schedule3ParseResult;
 void schedule4ParseResult;

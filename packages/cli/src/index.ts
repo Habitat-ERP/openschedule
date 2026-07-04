@@ -39,6 +39,7 @@ import {
   Schedule5ParseResultV1Schema,
   Schedule6ParseResultV1Schema,
   Schedule1QaReportV1Schema,
+  ScheduleFamilyQaReportV1Schema,
   TariffLineV1Schema,
   type CustomsRateColumnV1,
   type CustomsRulesetV1,
@@ -438,6 +439,7 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
       "schedule5-parse-result": Schedule5ParseResultV1Schema,
       "schedule6-parse-result": Schedule6ParseResultV1Schema,
       "schedule1-qa-report": Schedule1QaReportV1Schema,
+      "schedule-family-qa-report": ScheduleFamilyQaReportV1Schema,
       "tariff-line": TariffLineV1Schema
     }
   };

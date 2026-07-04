@@ -78,6 +78,35 @@ test("parses Schedule 4 rebate rows with continuations and context", () => {
   assert.equal(result.rebateLines[1].validFrom, "2026-06-12");
 });
 
+test("keeps Schedule 4 rows missing extent visible for QA", () => {
+  const result = parseSchedule4RebatesTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2026-06-12", 30, 36),
+        item("SCHEDULE 4 / PART 2", 48, 36),
+        item("Rebate Item", 72, 39),
+        item("Tariff Heading", 72, 115),
+        item("Rebate Code", 72, 180),
+        item("CD", 72, 225),
+        item("Description", 72, 250),
+        item("Extent of Rebate", 72, 702),
+        item("460.01", 126, 39),
+        item("03.02", 126, 115),
+        item("01.04", 126, 180),
+        item("49", 126, 225),
+        item("Mackerel, imported by specific permit", 126, 250)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.rebateLines.length, 1);
+  assert.equal(result.rebateLines[0].extentOfRebate, "");
+  assert.ok(result.rebateLines[0].warnings.includes("Missing extent of rebate."));
+  assert.ok(result.rebateLines[0].parseConfidence < 1);
+});
+
 test("optionally parses the live cached SARS Schedule 4 PDF when OPENSCHEDULE_SARS_SCHEDULE4_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE4_PDF_PATH;
   if (!pdfPath) {

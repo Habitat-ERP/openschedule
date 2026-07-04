@@ -16,6 +16,7 @@ import {
   Schedule5ParseResultV1Schema,
   Schedule6ParseResultV1Schema,
   Schedule1QaReportV1Schema,
+  ScheduleFamilyQaReportV1Schema,
   TariffLineV1Schema
 } from "../dist/src/index.js";
 
@@ -34,6 +35,7 @@ test("schema versions are stable", () => {
   assert.equal(Schedule5ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule5-parse-result.v1");
   assert.equal(Schedule6ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule6-parse-result.v1");
   assert.equal(Schedule1QaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
+  assert.equal(ScheduleFamilyQaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule-family-qa-report.v1");
 });
 
 test("tariff line contract keeps audit fields required", () => {
@@ -54,4 +56,5 @@ test("customs ruleset contract keeps parser metrics", () => {
   assert.ok(Schedule5ParseResultV1Schema.properties.metrics.$ref);
   assert.ok(Schedule6ParseResultV1Schema.properties.metrics.$ref);
   assert.ok(Schedule1QaReportV1Schema.required.includes("summary"));
+  assert.ok(ScheduleFamilyQaReportV1Schema.required.includes("summary"));
 });

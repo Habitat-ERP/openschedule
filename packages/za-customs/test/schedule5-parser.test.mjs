@@ -81,6 +81,35 @@ test("parses Schedule 5 drawback and refund rows with continuations and context"
   assert.equal(result.drawbackRefundLines[1].validFrom, "2026-01-01");
 });
 
+test("keeps Schedule 5 rows missing extent visible for QA", () => {
+  const result = parseSchedule5DrawbacksRefundsTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2026-01-01", 30, 36),
+        item("SCHEDULE 5 / PART 1", 48, 36),
+        item("Drawback Item", 72, 39),
+        item("Tariff Heading", 72, 115),
+        item("Code", 72, 180),
+        item("CD", 72, 225),
+        item("Description", 72, 250),
+        item("Extent of Drawback", 72, 702),
+        item("501.02", 126, 39),
+        item("03.05", 126, 115),
+        item("01.04", 126, 180),
+        item("43", 126, 225),
+        item("Salted fish, used in the manufacture of dried fish", 126, 250)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.drawbackRefundLines.length, 1);
+  assert.equal(result.drawbackRefundLines[0].extentOfRefundOrDrawback, "");
+  assert.ok(result.drawbackRefundLines[0].warnings.includes("Missing extent of refund or drawback."));
+  assert.ok(result.drawbackRefundLines[0].parseConfidence < 1);
+});
+
 test("optionally parses the live cached SARS Schedule 5 PDF when OPENSCHEDULE_SARS_SCHEDULE5_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE5_PDF_PATH;
   if (!pdfPath) {

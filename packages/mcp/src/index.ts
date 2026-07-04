@@ -31,6 +31,7 @@ import {
   Schedule5ParseResultV1Schema,
   Schedule6ParseResultV1Schema,
   Schedule1QaReportV1Schema,
+  ScheduleFamilyQaReportV1Schema,
   TariffLineV1Schema,
   buildCustomsRulesetFromPdf,
   diffCustomsRulesets,
@@ -77,6 +78,7 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/za-customs/schedule5-parse-result.v1": Schedule5ParseResultV1Schema,
   "openschedule://schemas/za-customs/schedule6-parse-result.v1": Schedule6ParseResultV1Schema,
   "openschedule://schemas/za-customs/schedule1-qa-report.v1": Schedule1QaReportV1Schema,
+  "openschedule://schemas/za-customs/schedule-family-qa-report.v1": ScheduleFamilyQaReportV1Schema,
   "openschedule://schemas/za-customs/tariff-line.v1": TariffLineV1Schema
 };
 

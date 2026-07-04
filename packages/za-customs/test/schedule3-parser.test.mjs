@@ -78,6 +78,35 @@ test("parses Schedule 3 industrial rebate rows with continuations and context", 
   assert.equal(result.rebateLines[1].validFrom, "2026-01-25");
 });
 
+test("keeps Schedule 3 rows missing extent visible for QA", () => {
+  const result = parseSchedule3IndustrialRebatesTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2026-01-25", 30, 36),
+        item("SCHEDULE 3 / PART 1", 48, 36),
+        item("Rebate Item", 72, 39),
+        item("Tariff Heading", 72, 115),
+        item("Rebate Code", 72, 180),
+        item("CD", 72, 225),
+        item("Description", 72, 250),
+        item("Extent of Rebate", 72, 702),
+        item("303.01", 126, 39),
+        item("1511.90", 126, 115),
+        item("01.06", 126, 180),
+        item("62", 126, 225),
+        item("Palm stearin, not chemically modified", 126, 250)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.rebateLines.length, 1);
+  assert.equal(result.rebateLines[0].extentOfRebate, "");
+  assert.ok(result.rebateLines[0].warnings.includes("Missing extent of rebate."));
+  assert.ok(result.rebateLines[0].parseConfidence < 1);
+});
+
 test("optionally parses the live cached SARS Schedule 3 PDF when OPENSCHEDULE_SARS_SCHEDULE3_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE3_PDF_PATH;
   if (!pdfPath) {

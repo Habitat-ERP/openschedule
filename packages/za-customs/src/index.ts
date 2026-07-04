@@ -8,6 +8,7 @@ export * from "./schedule3-parser.js";
 export * from "./schedule4-parser.js";
 export * from "./schedule5-parser.js";
 export * from "./schedule6-parser.js";
+export * from "./schedule-family-qa.js";
 export * from "./schemas.js";
 export { CUSTOMS_RATE_COLUMNS } from "./types.js";
 export type * from "./types.js";

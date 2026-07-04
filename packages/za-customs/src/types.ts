@@ -500,3 +500,41 @@ export interface Schedule1QaReportV1 {
   reviewSet: Schedule1LineInspectionV1[];
   warnings: string[];
 }
+
+export type ScheduleFamilyV1 = "schedule2" | "schedule3" | "schedule4" | "schedule5" | "schedule6";
+
+export type ScheduleFamilyQaIssueCategoryV1 =
+  | "low_confidence_line"
+  | "continuation_row"
+  | "duplicate_normalized_family_key"
+  | "missing_source_trace"
+  | "missing_required_field"
+  | "page_high_rejection_count";
+
+export interface ScheduleFamilyQaIssueV1 {
+  category: ScheduleFamilyQaIssueCategoryV1;
+  severity: "info" | "warning" | "error";
+  message: string;
+  schedule: ScheduleFamilyV1;
+  lineKey?: string | null;
+  normalizedLineKey?: string | null;
+  field?: string | null;
+  page?: number | null;
+  sourceTrace?: SourceTraceV1[];
+}
+
+export interface ScheduleFamilyQaReportV1 {
+  schemaVersion: "za-customs.schedule-family-qa-report.v1";
+  schedule: ScheduleFamilyV1;
+  summary: {
+    lines: number;
+    lowConfidenceLines: number;
+    continuationRows: number;
+    duplicateNormalizedFamilyKeys: number;
+    linesMissingSourceTrace: number;
+    missingRequiredFields: number;
+    pagesWithHighRejectionCounts: number;
+  };
+  issues: ScheduleFamilyQaIssueV1[];
+  warnings: string[];
+}

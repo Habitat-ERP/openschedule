@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/schedule-family-qa-report.v1",
+  "title": "Schedule Family QA Report V1",
+  "description": "Quality assurance report for SARS Schedule 2-6 parser output families.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "schedule",
+    "summary",
+    "issues",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.schedule-family-qa-report.v1"
+    },
+    "schedule": {
+      "$ref": "#/$defs/schedule"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lines",
+        "lowConfidenceLines",
+        "continuationRows",
+        "duplicateNormalizedFamilyKeys",
+        "linesMissingSourceTrace",
+        "missingRequiredFields",
+        "pagesWithHighRejectionCounts"
+      ],
+      "properties": {
+        "lines": { "type": "integer", "minimum": 0 },
+        "lowConfidenceLines": { "type": "integer", "minimum": 0 },
+        "continuationRows": { "type": "integer", "minimum": 0 },
+        "duplicateNormalizedFamilyKeys": { "type": "integer", "minimum": 0 },
+        "linesMissingSourceTrace": { "type": "integer", "minimum": 0 },
+        "missingRequiredFields": { "type": "integer", "minimum": 0 },
+        "pagesWithHighRejectionCounts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "schedule": {
+      "enum": ["schedule2", "schedule3", "schedule4", "schedule5", "schedule6"]
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "severity",
+        "message",
+        "schedule"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "low_confidence_line",
+            "continuation_row",
+            "duplicate_normalized_family_key",
+            "missing_source_trace",
+            "missing_required_field",
+            "page_high_rejection_count"
+          ]
+        },
+        "severity": {
+          "enum": ["info", "warning", "error"]
+        },
+        "message": { "type": "string" },
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "lineKey": { "type": ["string", "null"] },
+        "normalizedLineKey": { "type": ["string", "null"] },
+        "field": { "type": ["string", "null"] },
+        "page": { "type": ["integer", "null"], "minimum": 1 },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    }
+  }
+}
