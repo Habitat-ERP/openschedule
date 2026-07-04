@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "license": "Apache-2.0",
   "type": "module",
+  "bin": {
+    "openschedule-mcp": "./dist/src/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -16,5 +19,10 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@openschedule/core": "0.0.0",
+    "@openschedule/za-customs": "0.0.0",
+    "@openschedule/za-sars": "0.0.0"
   }
 }
