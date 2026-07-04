@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/core/ruleset-manifest.v1",
+  "title": "Ruleset Manifest V1",
+  "description": "Manifest for an immutable ruleset built from a specific set of source documents.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "rulesetId",
+    "domain",
+    "country",
+    "publisher",
+    "generatedAt",
+    "sourceDocuments",
+    "parser",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "core.ruleset-manifest.v1"
+    },
+    "rulesetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "country": {
+      "type": "string",
+      "minLength": 2
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "description": "ISO 8601 timestamp for ruleset generation."
+    },
+    "effectiveDate": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceDocuments": {
+      "type": "array",
+      "items": {
+        "$ref": "openschedule://schemas/core/source-document-metadata.v1"
+      }
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageName",
+        "packageVersion"
+      ],
+      "properties": {
+        "packageName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

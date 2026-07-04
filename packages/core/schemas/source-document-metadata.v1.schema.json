@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/core/source-document-metadata.v1",
+  "title": "Source Document Metadata V1",
+  "description": "Metadata for an official source document processed in a user's environment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sha256"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "core.source-document-metadata.v1"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "fileName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceUrl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "retrievedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 timestamp for local retrieval, when known."
+    }
+  }
+}

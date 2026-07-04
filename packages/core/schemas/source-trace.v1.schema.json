@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/core/source-trace.v1",
+  "title": "Source Trace V1",
+  "description": "A small provenance pointer from derived data back to an official source document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sourceDocumentSha256"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "core.source-trace.v1"
+    },
+    "sourceDocumentSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "page": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "locator": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "text": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

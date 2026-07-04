@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.npm-cache/
+coverage/
+.DS_Store
+.env
+.env.*
+*.log
+
+# Local OpenSchedule outputs
+sources/
+rulesets/
+tmp/

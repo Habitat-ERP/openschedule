@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-sars/fetched-customs-source.v1",
+  "title": "Fetched SARS Customs Source V1",
+  "description": "Result of fetching an official SARS customs source document into a local cache.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "source",
+    "document",
+    "documentPath",
+    "metadataPath",
+    "bytes",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-sars.fetched-customs-source.v1"
+    },
+    "source": {
+      "$ref": "openschedule://schemas/za-sars/customs-source.v1"
+    },
+    "document": {
+      "$ref": "openschedule://schemas/core/source-document-metadata.v1"
+    },
+    "documentPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadataPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-sars/customs-source.v1",
+  "title": "SARS Customs Source V1",
+  "description": "Official SARS customs source document reference discovered for local user fetch.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "country",
+    "publisher",
+    "domain",
+    "schedule",
+    "part",
+    "chapterRange",
+    "title",
+    "sourceFormat",
+    "sourceUpdatedDate",
+    "registryPageUrl",
+    "sourceUrl"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-sars.customs-source.v1"
+    },
+    "id": {
+      "const": "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1"
+    },
+    "country": {
+      "const": "ZA"
+    },
+    "publisher": {
+      "const": "SARS"
+    },
+    "domain": {
+      "const": "za-customs"
+    },
+    "schedule": {
+      "const": "1"
+    },
+    "part": {
+      "const": "1"
+    },
+    "chapterRange": {
+      "const": "1-99"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceFormat": {
+      "const": "application/pdf"
+    },
+    "sourceUpdatedDate": {
+      "type": "string"
+    },
+    "registryPageUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "sourceUrl": {
+      "type": "string",
+      "format": "uri"
+    }
+  }
+}

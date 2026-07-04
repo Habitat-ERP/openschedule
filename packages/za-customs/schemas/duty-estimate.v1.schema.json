@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/duty-estimate.v1",
+  "title": "Customs Duty Estimate V1",
+  "description": "A deterministic customs duty estimate result with warnings instead of guesses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "estimatedDuty",
+    "currency",
+    "rulesetId",
+    "tariffCode",
+    "rateColumn",
+    "effectiveDate",
+    "sourceTrace",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.duty-estimate.v1"
+    },
+    "estimatedDuty": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "currency": {
+      "const": "ZAR"
+    },
+    "rulesetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tariffCode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rateColumn": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effectiveDate": {
+      "type": "string"
+    },
+    "sourceTrace": {
+      "type": "array",
+      "items": {
+        "$ref": "openschedule://schemas/core/source-trace.v1"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

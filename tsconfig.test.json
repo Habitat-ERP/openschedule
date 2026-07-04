@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "packages/*/test/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/za-sars"
+    },
+    {
+      "path": "./packages/za-customs"
+    }
+  ]
+}

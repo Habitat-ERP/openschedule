@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/customs-ruleset.v1",
+  "title": "Customs Ruleset V1",
+  "description": "A versioned South African customs ruleset built from official source documents in a user's environment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifest",
+    "tariffLines"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.customs-ruleset.v1"
+    },
+    "manifest": {
+      "$ref": "openschedule://schemas/core/ruleset-manifest.v1"
+    },
+    "tariffLines": {
+      "type": "array",
+      "items": {
+        "$ref": "openschedule://schemas/za-customs/tariff-line.v1"
+      }
+    }
+  }
+}
