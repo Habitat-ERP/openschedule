@@ -11,6 +11,10 @@ import {
   CustomsRulesetV1Schema,
   Schedule1ParseResultV1Schema,
   Schedule2ParseResultV1Schema,
+  Schedule3ParseResultV1Schema,
+  Schedule4ParseResultV1Schema,
+  Schedule5ParseResultV1Schema,
+  Schedule6ParseResultV1Schema,
   Schedule1QaReportV1Schema,
   TariffLineV1Schema
 } from "../dist/src/index.js";
@@ -25,6 +29,10 @@ test("schema versions are stable", () => {
   assert.equal(CustomsDutyEstimateV1Schema.properties.schemaVersion.const, "za-customs.duty-estimate.v1");
   assert.equal(Schedule1ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule1-parse-result.v1");
   assert.equal(Schedule2ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule2-parse-result.v1");
+  assert.equal(Schedule3ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule3-parse-result.v1");
+  assert.equal(Schedule4ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule4-parse-result.v1");
+  assert.equal(Schedule5ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule5-parse-result.v1");
+  assert.equal(Schedule6ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule6-parse-result.v1");
   assert.equal(Schedule1QaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
 });
 
@@ -41,5 +49,9 @@ test("customs ruleset contract keeps parser metrics", () => {
   assert.ok(CustomsRulesetV1Schema.properties.pageMetrics);
   assert.ok(Schedule1ParseResultV1Schema.properties.pageMetrics);
   assert.ok(Schedule2ParseResultV1Schema.properties.metrics.$ref);
+  assert.ok(Schedule3ParseResultV1Schema.properties.metrics.$ref);
+  assert.ok(Schedule4ParseResultV1Schema.properties.metrics.$ref);
+  assert.ok(Schedule5ParseResultV1Schema.properties.metrics.$ref);
+  assert.ok(Schedule6ParseResultV1Schema.properties.metrics.$ref);
   assert.ok(Schedule1QaReportV1Schema.required.includes("summary"));
 });

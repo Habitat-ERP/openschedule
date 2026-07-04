@@ -26,6 +26,10 @@ import {
   CustomsRulesetV1Schema,
   Schedule1ParseResultV1Schema,
   Schedule2ParseResultV1Schema,
+  Schedule3ParseResultV1Schema,
+  Schedule4ParseResultV1Schema,
+  Schedule5ParseResultV1Schema,
+  Schedule6ParseResultV1Schema,
   Schedule1QaReportV1Schema,
   TariffLineV1Schema,
   buildCustomsRulesetFromPdf,
@@ -68,6 +72,10 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/za-customs/customs-ruleset.v1": CustomsRulesetV1Schema,
   "openschedule://schemas/za-customs/schedule1-parse-result.v1": Schedule1ParseResultV1Schema,
   "openschedule://schemas/za-customs/schedule2-parse-result.v1": Schedule2ParseResultV1Schema,
+  "openschedule://schemas/za-customs/schedule3-parse-result.v1": Schedule3ParseResultV1Schema,
+  "openschedule://schemas/za-customs/schedule4-parse-result.v1": Schedule4ParseResultV1Schema,
+  "openschedule://schemas/za-customs/schedule5-parse-result.v1": Schedule5ParseResultV1Schema,
+  "openschedule://schemas/za-customs/schedule6-parse-result.v1": Schedule6ParseResultV1Schema,
   "openschedule://schemas/za-customs/schedule1-qa-report.v1": Schedule1QaReportV1Schema,
   "openschedule://schemas/za-customs/tariff-line.v1": TariffLineV1Schema
 };

@@ -4,6 +4,10 @@ import type {
   CustomsRulesetV1,
   Schedule1QaReportV1,
   Schedule2ParseResultV1,
+  Schedule3ParseResultV1,
+  Schedule4ParseResultV1,
+  Schedule5ParseResultV1,
+  Schedule6ParseResultV1,
   TariffLineV1
 } from "../src/index.js";
 
@@ -152,6 +156,191 @@ const schedule2ParseResult = {
   }
 } satisfies Schedule2ParseResultV1;
 
+const schedule3ParseResult = {
+  schemaVersion: "za-customs.schedule3-parse-result.v1",
+  rebateLines: [
+    {
+      schemaVersion: "za-customs.schedule3-industrial-rebate-line.v1",
+      part: "1",
+      rebateItem: "303.01",
+      normalizedRebateItem: "30301",
+      tariffHeading: "1511.90",
+      normalizedTariffHeading: "151190",
+      rebateCode: "01.06",
+      normalizedRebateCode: "0106",
+      checkDigit: "62",
+      description: "Synthetic industrial rebate goods",
+      normalizedDescription: "Synthetic industrial rebate goods",
+      extentOfRebate: "Full duty",
+      validFrom: "2026-01-25",
+      context: [
+        {
+          part: "1",
+          rebateItem: "303.00",
+          normalizedRebateItem: "30300",
+          description: "Synthetic industry",
+          normalizedDescription: "Synthetic industry",
+          level: 1,
+          sourceTrace: [sourceTrace]
+        }
+      ],
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 1,
+    rebateLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule3ParseResultV1;
+
+const schedule4ParseResult = {
+  schemaVersion: "za-customs.schedule4-parse-result.v1",
+  rebateLines: [
+    {
+      schemaVersion: "za-customs.schedule4-rebate-line.v1",
+      part: "2",
+      rebateItem: "460.01",
+      normalizedRebateItem: "46001",
+      tariffHeading: "03.02",
+      normalizedTariffHeading: "0302",
+      rebateCode: "01.04",
+      normalizedRebateCode: "0104",
+      checkDigit: "49",
+      description: "Synthetic Schedule 4 rebate goods",
+      normalizedDescription: "Synthetic Schedule 4 rebate goods",
+      extentOfRebate: "Full duty",
+      validFrom: "2026-06-12",
+      context: [
+        {
+          part: "2",
+          rebateItem: "460.00",
+          normalizedRebateItem: "46000",
+          description: "Synthetic Schedule 4 context",
+          normalizedDescription: "Synthetic Schedule 4 context",
+          level: 1,
+          sourceTrace: [sourceTrace]
+        }
+      ],
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 1,
+    rebateLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule4ParseResultV1;
+
+const schedule5ParseResult = {
+  schemaVersion: "za-customs.schedule5-parse-result.v1",
+  drawbackRefundLines: [
+    {
+      schemaVersion: "za-customs.schedule5-drawback-refund-line.v1",
+      part: "1",
+      item: "501.02",
+      normalizedItem: "50102",
+      tariffHeading: "03.05",
+      normalizedTariffHeading: "0305",
+      code: "01.04",
+      normalizedCode: "0104",
+      checkDigit: "43",
+      description: "Synthetic Schedule 5 drawback goods",
+      normalizedDescription: "Synthetic Schedule 5 drawback goods",
+      extentOfRefundOrDrawback: "Full duty",
+      validFrom: "2026-01-01",
+      context: [
+        {
+          part: "1",
+          item: "501.00",
+          normalizedItem: "50100",
+          description: "Synthetic Schedule 5 context",
+          normalizedDescription: "Synthetic Schedule 5 context",
+          level: 1,
+          sourceTrace: [sourceTrace]
+        }
+      ],
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 1,
+    drawbackRefundLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule5ParseResultV1;
+
+const schedule6ParseResult = {
+  schemaVersion: "za-customs.schedule6-parse-result.v1",
+  exciseRebateRefundLines: [
+    {
+      schemaVersion: "za-customs.schedule6-excise-rebate-refund-line.v1",
+      part: "1B",
+      item: "619.01",
+      normalizedItem: "61901",
+      tariffItem: "104.10.10",
+      normalizedTariffItem: "1041010",
+      rebateCode: "01.01",
+      normalizedRebateCode: "0101",
+      checkDigit: "76",
+      description: "Synthetic Schedule 6 excise goods",
+      normalizedDescription: "Synthetic Schedule 6 excise goods",
+      extentOfRebate: "Full duty",
+      extentOfRefund: "",
+      validFrom: "2026-07-01",
+      context: [
+        {
+          part: "1B",
+          item: "619.00",
+          normalizedItem: "61900",
+          description: "Synthetic Schedule 6 context",
+          normalizedDescription: "Synthetic Schedule 6 context",
+          level: 1,
+          sourceTrace: [sourceTrace]
+        }
+      ],
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 1,
+    exciseRebateRefundLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule6ParseResultV1;
+
 void estimate;
 void qaReport;
 void schedule2ParseResult;
+void schedule3ParseResult;
+void schedule4ParseResult;
+void schedule5ParseResult;
+void schedule6ParseResult;

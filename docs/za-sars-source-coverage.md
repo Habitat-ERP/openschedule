@@ -28,5 +28,7 @@ Verified against SARS public pages on 2026-07-04:
   scope is tariff/rate source discovery, trade remedies, rebates/refunds, excise/levies, and amendment notice
   registries.
 - Individual amendment notices are not enumerated yet. Phase 13 is the place for notice-level metadata.
-- No parser exists for Schedule 2, Schedules 3-6, Schedule 1 excise/levy parts, or amendment notices.
+- Parsers now exist for Schedule 2 trade remedies, Schedule 3 industrial rebates, Schedule 4 rebates,
+  Schedule 5 drawbacks/refunds, and Schedule 6 excise rebates/refunds. No parser exists for Schedule 1
+  excise/levy parts or amendment notices.
 - `fetchCustomsSources()` fetches PDF descriptors only. HTML amendment registry pages are discovery metadata until a later update-detection or notice-discovery phase.

@@ -191,6 +191,255 @@ export interface Schedule2ParseResultV1 {
   pageMetrics?: Schedule2ParsePageMetricsV1[];
 }
 
+export type Schedule3PartV1 = "1" | "2" | "unknown";
+
+export interface Schedule3IndustrialRebateContextV1 {
+  part: Schedule3PartV1;
+  rebateItem: string;
+  normalizedRebateItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule3IndustrialRebateLineV1 {
+  schemaVersion: "za-customs.schedule3-industrial-rebate-line.v1";
+  part: Schedule3PartV1;
+  rebateItem: string;
+  normalizedRebateItem: string;
+  tariffHeading: string;
+  normalizedTariffHeading: string;
+  rebateCode: string;
+  normalizedRebateCode: string;
+  checkDigit?: string | null;
+  description: string;
+  normalizedDescription: string;
+  extentOfRebate: string;
+  validFrom: string;
+  context?: Schedule3IndustrialRebateContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule3ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  rebateLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule3ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  rebateLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule3ParseResultV1 {
+  schemaVersion: "za-customs.schedule3-parse-result.v1";
+  rebateLines: Schedule3IndustrialRebateLineV1[];
+  warnings: string[];
+  metrics: Schedule3ParseMetricsV1;
+  pageMetrics?: Schedule3ParsePageMetricsV1[];
+}
+
+export type Schedule4PartV1 = "1" | "2" | "3" | "4" | "5" | "6" | "unknown";
+
+export interface Schedule4RebateContextV1 {
+  part: Schedule4PartV1;
+  rebateItem: string;
+  normalizedRebateItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule4RebateLineV1 {
+  schemaVersion: "za-customs.schedule4-rebate-line.v1";
+  part: Schedule4PartV1;
+  rebateItem: string;
+  normalizedRebateItem: string;
+  tariffHeading: string;
+  normalizedTariffHeading: string;
+  rebateCode: string;
+  normalizedRebateCode: string;
+  checkDigit?: string | null;
+  description: string;
+  normalizedDescription: string;
+  extentOfRebate: string;
+  validFrom: string;
+  context?: Schedule4RebateContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule4ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  rebateLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule4ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  rebateLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule4ParseResultV1 {
+  schemaVersion: "za-customs.schedule4-parse-result.v1";
+  rebateLines: Schedule4RebateLineV1[];
+  warnings: string[];
+  metrics: Schedule4ParseMetricsV1;
+  pageMetrics?: Schedule4ParsePageMetricsV1[];
+}
+
+export type Schedule5PartV1 = "1" | "2" | "3" | "4" | "5" | "6" | "unknown";
+
+export interface Schedule5DrawbackRefundContextV1 {
+  part: Schedule5PartV1;
+  item: string;
+  normalizedItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule5DrawbackRefundLineV1 {
+  schemaVersion: "za-customs.schedule5-drawback-refund-line.v1";
+  part: Schedule5PartV1;
+  item: string;
+  normalizedItem: string;
+  tariffHeading: string;
+  normalizedTariffHeading: string;
+  code: string;
+  normalizedCode: string;
+  checkDigit?: string | null;
+  description: string;
+  normalizedDescription: string;
+  extentOfRefundOrDrawback: string;
+  validFrom: string;
+  context?: Schedule5DrawbackRefundContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule5ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  drawbackRefundLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule5ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  drawbackRefundLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule5ParseResultV1 {
+  schemaVersion: "za-customs.schedule5-parse-result.v1";
+  drawbackRefundLines: Schedule5DrawbackRefundLineV1[];
+  warnings: string[];
+  metrics: Schedule5ParseMetricsV1;
+  pageMetrics?: Schedule5ParsePageMetricsV1[];
+}
+
+export type Schedule6PartV1 = string;
+
+export interface Schedule6ExciseRebateRefundContextV1 {
+  part: Schedule6PartV1;
+  item: string;
+  normalizedItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule6ExciseRebateRefundLineV1 {
+  schemaVersion: "za-customs.schedule6-excise-rebate-refund-line.v1";
+  part: Schedule6PartV1;
+  item: string;
+  normalizedItem: string;
+  tariffItem: string;
+  normalizedTariffItem: string;
+  rebateCode: string;
+  normalizedRebateCode: string;
+  checkDigit?: string | null;
+  description: string;
+  normalizedDescription: string;
+  extentOfRebate: string;
+  extentOfRefund: string;
+  validFrom: string;
+  context?: Schedule6ExciseRebateRefundContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule6ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  exciseRebateRefundLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule6ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  exciseRebateRefundLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule6ParseResultV1 {
+  schemaVersion: "za-customs.schedule6-parse-result.v1";
+  exciseRebateRefundLines: Schedule6ExciseRebateRefundLineV1[];
+  warnings: string[];
+  metrics: Schedule6ParseMetricsV1;
+  pageMetrics?: Schedule6ParsePageMetricsV1[];
+}
+
 export interface Schedule1LineInspectionV1 {
   schemaVersion: "za-customs.schedule1-line-inspection.v1";
   tariffCode: string;

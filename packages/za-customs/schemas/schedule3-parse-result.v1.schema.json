@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/schedule3-parse-result.v1",
+  "title": "Schedule 3 Parse Result V1",
+  "description": "Parser result for SARS Schedule 3 industrial rebate lines, including quality metrics and source provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "rebateLines",
+    "warnings",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.schedule3-parse-result.v1"
+    },
+    "rebateLines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/industrialRebateLine"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "pageMetrics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pageMetrics"
+      }
+    }
+  },
+  "$defs": {
+    "part": {
+      "enum": [
+        "1",
+        "2",
+        "unknown"
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pagesParsed",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "rebateLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pagesParsed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "textItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layoutRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contextRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rebateLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejectedRows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "pageMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageNumber",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "rebateLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pageNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "textItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layoutRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contextRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rebateLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejectedRows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "industrialRebateContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "part",
+        "rebateItem",
+        "normalizedRebateItem",
+        "description",
+        "normalizedDescription",
+        "level",
+        "sourceTrace"
+      ],
+      "properties": {
+        "part": {
+          "$ref": "#/$defs/part"
+        },
+        "rebateItem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedRebateItem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "normalizedDescription": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    },
+    "industrialRebateLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "part",
+        "rebateItem",
+        "normalizedRebateItem",
+        "tariffHeading",
+        "normalizedTariffHeading",
+        "rebateCode",
+        "normalizedRebateCode",
+        "description",
+        "normalizedDescription",
+        "extentOfRebate",
+        "validFrom",
+        "sourceTrace",
+        "parseConfidence",
+        "warnings"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "za-customs.schedule3-industrial-rebate-line.v1"
+        },
+        "part": {
+          "$ref": "#/$defs/part"
+        },
+        "rebateItem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedRebateItem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tariffHeading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedTariffHeading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rebateCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedRebateCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checkDigit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "normalizedDescription": {
+          "type": "string"
+        },
+        "extentOfRebate": {
+          "type": "string"
+        },
+        "validFrom": {
+          "type": "string"
+        },
+        "context": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/industrialRebateContext"
+          }
+        },
+        "sourcePublishedDate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sourceImplementationDate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        },
+        "parseConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
