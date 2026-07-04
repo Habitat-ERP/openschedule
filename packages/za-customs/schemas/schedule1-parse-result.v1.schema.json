@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/schedule1-parse-result.v1",
+  "title": "Schedule 1 Parse Result V1",
+  "description": "Parser spike result for SARS Schedule 1 Part 1 customs tariff lines, including quality metrics and warnings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "tariffLines",
+    "warnings",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.schedule1-parse-result.v1"
+    },
+    "tariffLines": {
+      "type": "array",
+      "items": {
+        "$ref": "openschedule://schemas/za-customs/tariff-line.v1"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pagesParsed",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "tariffLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pagesParsed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "textItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layoutRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contextRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tariffLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejectedRows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

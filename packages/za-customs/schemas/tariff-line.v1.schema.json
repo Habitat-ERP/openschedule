@@ -10,6 +10,7 @@
     "tariffCode",
     "normalizedTariffCode",
     "description",
+    "normalizedDescription",
     "rates",
     "validFrom",
     "sourceTrace",
@@ -37,11 +38,21 @@
     "description": {
       "type": "string"
     },
+    "normalizedDescription": {
+      "type": "string"
+    },
     "statisticalUnit": {
       "type": [
         "string",
         "null"
       ]
+    },
+    "context": {
+      "type": "array",
+      "description": "Active heading/subheading hierarchy rows that provide context for this tariff line.",
+      "items": {
+        "$ref": "#/$defs/tariffLineContext"
+      }
     },
     "rates": {
       "type": "object",
@@ -110,6 +121,44 @@
     }
   },
   "$defs": {
+    "tariffLineContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "normalizedCode",
+        "description",
+        "normalizedDescription",
+        "level",
+        "sourceTrace"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "normalizedDescription": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    },
     "dutyRate": {
       "type": "object",
       "additionalProperties": false,

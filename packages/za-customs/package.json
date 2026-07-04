@@ -20,6 +20,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@openschedule/core": "0.0.0"
+    "@openschedule/core": "0.0.0",
+    "pdfjs-dist": "^6.1.200"
   }
 }

@@ -7,6 +7,7 @@ import {
 import {
   CustomsDutyEstimateV1Schema,
   CustomsRulesetV1Schema,
+  Schedule1ParseResultV1Schema,
   TariffLineV1Schema
 } from "../dist/src/index.js";
 
@@ -16,6 +17,7 @@ test("schema versions are stable", () => {
   assert.equal(TariffLineV1Schema.properties.schemaVersion.const, "za-customs.tariff-line.v1");
   assert.equal(CustomsRulesetV1Schema.properties.schemaVersion.const, "za-customs.customs-ruleset.v1");
   assert.equal(CustomsDutyEstimateV1Schema.properties.schemaVersion.const, "za-customs.duty-estimate.v1");
+  assert.equal(Schedule1ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule1-parse-result.v1");
 });
 
 test("tariff line contract keeps audit fields required", () => {

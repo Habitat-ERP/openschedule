@@ -35,6 +35,7 @@ const tariffLine = {
   tariffCode: "0000.00.00",
   normalizedTariffCode: "00000000",
   description: "Synthetic goods",
+  normalizedDescription: "Synthetic goods",
   rates: {
     general: {
       raw: "free",

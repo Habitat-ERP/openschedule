@@ -19,12 +19,22 @@ export interface DutyRateV1 {
   warnings: string[];
 }
 
+export interface TariffLineContextV1 {
+  code: string;
+  normalizedCode: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
 export interface TariffLineV1 {
   schemaVersion: "za-customs.tariff-line.v1";
   tariffCode: string;
   normalizedTariffCode: string;
   checkDigit?: string | null;
   description: string;
+  normalizedDescription: string;
   statisticalUnit?: string | null;
   rates: {
     general: DutyRateV1;
@@ -36,6 +46,7 @@ export interface TariffLineV1 {
   };
   validFrom: string;
   validTo?: string | null;
+  context?: TariffLineContextV1[];
   sourcePublishedDate?: string | null;
   sourceImplementationDate?: string | null;
   sourceTrace: SourceTraceV1[];
@@ -59,4 +70,21 @@ export interface CustomsDutyEstimateV1 {
   effectiveDate: string;
   sourceTrace: SourceTraceV1[];
   warnings: string[];
+}
+
+export interface Schedule1ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  tariffLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule1ParseResultV1 {
+  schemaVersion: "za-customs.schedule1-parse-result.v1";
+  tariffLines: TariffLineV1[];
+  warnings: string[];
+  metrics: Schedule1ParseMetricsV1;
 }
