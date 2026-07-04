@@ -3,6 +3,7 @@ export * from "./pdf-text.js";
 export * from "./qa.js";
 export * from "./rulesets.js";
 export * from "./schedule1-parser.js";
+export * from "./schedule1-excise-levies-parser.js";
 export * from "./schedule2-parser.js";
 export * from "./schedule3-parser.js";
 export * from "./schedule4-parser.js";

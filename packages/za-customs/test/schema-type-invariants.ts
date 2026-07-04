@@ -3,6 +3,7 @@ import type {
   CustomsDutyEstimateV1,
   CustomsRulesetV1,
   ScheduleFamilyQaReportV1,
+  Schedule1ExciseLeviesParseResultV1,
   Schedule1QaReportV1,
   Schedule2ParseResultV1,
   Schedule3ParseResultV1,
@@ -132,6 +133,42 @@ const scheduleFamilyQaReport = {
   issues: [],
   warnings: []
 } satisfies ScheduleFamilyQaReportV1;
+
+const schedule1ExciseLeviesParseResult = {
+  schemaVersion: "za-customs.schedule1-excise-levies-parse-result.v1",
+  exciseLevyLines: [
+    {
+      schemaVersion: "za-customs.schedule1-excise-levy-line.v1",
+      part: "2A",
+      item: "104.10.10",
+      normalizedItem: "1041010",
+      tariffSubheading: "2203.00.05",
+      normalizedTariffSubheading: "22030005",
+      description: "Synthetic excise goods",
+      normalizedDescription: "Synthetic excise goods",
+      rate: {
+        raw: "7,82c/li",
+        kind: "specific",
+        components: [{ amount: 7.82, currency: "ZAc", perQuantity: 1, unit: "li" }],
+        warnings: []
+      },
+      validFrom: "2026-04-30",
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 0,
+    exciseLevyLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule1ExciseLeviesParseResultV1;
 
 const schedule2ParseResult = {
   schemaVersion: "za-customs.schedule2-parse-result.v1",
@@ -357,6 +394,7 @@ const schedule6ParseResult = {
 void estimate;
 void qaReport;
 void scheduleFamilyQaReport;
+void schedule1ExciseLeviesParseResult;
 void schedule2ParseResult;
 void schedule3ParseResult;
 void schedule4ParseResult;

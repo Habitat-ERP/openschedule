@@ -131,6 +131,63 @@ export interface Schedule1ParseResultV1 {
   pageMetrics?: Schedule1ParsePageMetricsV1[];
 }
 
+export interface Schedule1ExciseLevyContextV1 {
+  part: string;
+  item: string;
+  normalizedItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule1ExciseLevyLineV1 {
+  schemaVersion: "za-customs.schedule1-excise-levy-line.v1";
+  part: string;
+  item: string;
+  normalizedItem: string;
+  tariffSubheading: string;
+  normalizedTariffSubheading: string;
+  description: string;
+  normalizedDescription: string;
+  rate: DutyRateV1;
+  validFrom: string;
+  context?: Schedule1ExciseLevyContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule1ExciseLeviesParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  exciseLevyLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule1ExciseLeviesParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  exciseLevyLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule1ExciseLeviesParseResultV1 {
+  schemaVersion: "za-customs.schedule1-excise-levies-parse-result.v1";
+  exciseLevyLines: Schedule1ExciseLevyLineV1[];
+  warnings: string[];
+  metrics: Schedule1ExciseLeviesParseMetricsV1;
+  pageMetrics?: Schedule1ExciseLeviesParsePageMetricsV1[];
+}
+
 export interface Schedule2TradeRemedyContextV1 {
   item: string;
   normalizedItem: string;

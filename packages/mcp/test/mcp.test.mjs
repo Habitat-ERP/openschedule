@@ -104,6 +104,11 @@ test("initializes and lists tools/resources", async () => {
   assert.ok(tools.result.tools.some((tool) => tool.name === "list_rate_options"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "check_source_status"));
   assert.ok(resources.result.resources.some((resource) => resource.uri === "openschedule://schemas/za-customs/customs-ruleset.v1"));
+  assert.ok(
+    resources.result.resources.some(
+      (resource) => resource.uri === "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1"
+    )
+  );
   assert.ok(resources.result.resources.some((resource) => resource.uri === "openschedule://schemas/za-customs/schedule2-parse-result.v1"));
   assert.ok(resources.result.resources.some((resource) => resource.uri === "openschedule://schemas/za-customs/schedule3-parse-result.v1"));
   assert.ok(resources.result.resources.some((resource) => resource.uri === "openschedule://schemas/za-customs/schedule4-parse-result.v1"));
@@ -115,6 +120,9 @@ test("initializes and lists tools/resources", async () => {
 
 test("reads schema resources and calls schema tools", async () => {
   const resource = await request("resources/read", { uri: "openschedule://schemas/za-customs/tariff-line.v1" });
+  const schedule1ExciseResource = await request("resources/read", {
+    uri: "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1"
+  });
   const schedule2Resource = await request("resources/read", { uri: "openschedule://schemas/za-customs/schedule2-parse-result.v1" });
   const schedule3Resource = await request("resources/read", { uri: "openschedule://schemas/za-customs/schedule3-parse-result.v1" });
   const schedule4Resource = await request("resources/read", { uri: "openschedule://schemas/za-customs/schedule4-parse-result.v1" });
@@ -126,6 +134,10 @@ test("reads schema resources and calls schema tools", async () => {
   const schema = await toolCall("get_schema", { uri: "openschedule://schemas/za-customs/tariff-line.v1" });
 
   assert.equal(JSON.parse(resource.result.contents[0].text).properties.schemaVersion.const, "za-customs.tariff-line.v1");
+  assert.equal(
+    JSON.parse(schedule1ExciseResource.result.contents[0].text).properties.schemaVersion.const,
+    "za-customs.schedule1-excise-levies-parse-result.v1"
+  );
   assert.equal(JSON.parse(schedule2Resource.result.contents[0].text).properties.schemaVersion.const, "za-customs.schedule2-parse-result.v1");
   assert.equal(JSON.parse(schedule3Resource.result.contents[0].text).properties.schemaVersion.const, "za-customs.schedule3-parse-result.v1");
   assert.equal(JSON.parse(schedule4Resource.result.contents[0].text).properties.schemaVersion.const, "za-customs.schedule4-parse-result.v1");

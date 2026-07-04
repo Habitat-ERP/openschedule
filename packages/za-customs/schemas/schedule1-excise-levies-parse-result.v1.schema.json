@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1",
+  "title": "Schedule 1 Excise Levies Parse Result V1",
+  "description": "Parser result for SARS Schedule 1 excise and levy lines, starting with Part 2A specific excise duties.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "exciseLevyLines",
+    "warnings",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.schedule1-excise-levies-parse-result.v1"
+    },
+    "exciseLevyLines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/exciseLevyLine"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "pageMetrics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pageMetrics"
+      }
+    }
+  },
+  "$defs": {
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pagesParsed",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "exciseLevyLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pagesParsed": { "type": "integer", "minimum": 0 },
+        "textItems": { "type": "integer", "minimum": 0 },
+        "layoutRows": { "type": "integer", "minimum": 0 },
+        "candidateRows": { "type": "integer", "minimum": 0 },
+        "contextRows": { "type": "integer", "minimum": 0 },
+        "exciseLevyLines": { "type": "integer", "minimum": 0 },
+        "rejectedRows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "pageMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageNumber",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "exciseLevyLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "textItems": { "type": "integer", "minimum": 0 },
+        "layoutRows": { "type": "integer", "minimum": 0 },
+        "candidateRows": { "type": "integer", "minimum": 0 },
+        "contextRows": { "type": "integer", "minimum": 0 },
+        "exciseLevyLines": { "type": "integer", "minimum": 0 },
+        "rejectedRows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "exciseLevyContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "part",
+        "item",
+        "normalizedItem",
+        "description",
+        "normalizedDescription",
+        "level",
+        "sourceTrace"
+      ],
+      "properties": {
+        "part": { "type": "string", "minLength": 1 },
+        "item": { "type": "string", "minLength": 1 },
+        "normalizedItem": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "normalizedDescription": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1 },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    },
+    "exciseLevyLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "part",
+        "item",
+        "normalizedItem",
+        "tariffSubheading",
+        "normalizedTariffSubheading",
+        "description",
+        "normalizedDescription",
+        "rate",
+        "validFrom",
+        "sourceTrace",
+        "parseConfidence",
+        "warnings"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "za-customs.schedule1-excise-levy-line.v1"
+        },
+        "part": { "type": "string", "minLength": 1 },
+        "item": { "type": "string", "minLength": 1 },
+        "normalizedItem": { "type": "string", "minLength": 1 },
+        "tariffSubheading": { "type": "string", "minLength": 1 },
+        "normalizedTariffSubheading": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "normalizedDescription": { "type": "string" },
+        "rate": {
+          "$ref": "#/$defs/dutyRate"
+        },
+        "validFrom": { "type": "string", "minLength": 1 },
+        "context": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exciseLevyContext"
+          }
+        },
+        "sourcePublishedDate": { "type": ["string", "null"] },
+        "sourceImplementationDate": { "type": ["string", "null"] },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        },
+        "parseConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "dutyRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw",
+        "kind",
+        "components",
+        "warnings"
+      ],
+      "properties": {
+        "raw": { "type": "string" },
+        "kind": {
+          "enum": ["free", "ad_valorem", "specific", "compound", "formula", "unknown"]
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
