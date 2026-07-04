@@ -30,13 +30,16 @@ interface LayoutRow {
 }
 
 type ColumnName = "item" | "tariffSubheading" | "description" | "rate";
-type ColumnLayout = Record<ColumnName, number>;
+type ColumnLayout = Record<ColumnName, number> & {
+  hasTariffSubheading: boolean;
+};
 
 const DEFAULT_LAYOUT: ColumnLayout = {
   item: 39,
   tariffSubheading: 115,
   description: 210,
-  rate: 702
+  rate: 702,
+  hasTariffSubheading: true
 };
 
 const ROW_TOLERANCE = 2;
@@ -219,13 +222,26 @@ function detectColumnLayout(rows: LayoutRow[]): ColumnLayout {
         text === "Environmental Levy Item" ||
         text === "Environmental" ||
         text === "Electricity" ||
+        text === "Fuel" ||
+        text === "Road Accident Fund" ||
+        text === "Fuel Levy Item" ||
+        text === "Export Duty" ||
+        text === "Item" ||
+        text === "Health" ||
+        text === "Promotion" ||
+        text === "Ordinary" ||
+        text === "Ordinary Levy Item" ||
         text === "Levy Item"
       ) {
         layout.item = item.column;
       }
-      if (text === "Tariff Subheading" || text === "Subheading" || text === "Tariff Heading") layout.tariffSubheading = item.column;
-      if (text === "Article Description") layout.description = item.column;
+      if (text === "Tariff Subheading" || text === "Subheading" || text === "Tariff Heading" || text === "Tariff") {
+        layout.tariffSubheading = item.column;
+        layout.hasTariffSubheading = true;
+      }
+      if (text === "Article Description" || text === "Descrption") layout.description = item.column;
       if (text === "Rate of" || text.startsWith("Rate of ")) layout.rate = item.column;
+      if (text === "Ordinary" || text === "Ordinary Levy Item") layout.hasTariffSubheading = false;
     }
   }
   return layout;
@@ -241,12 +257,16 @@ function readRowFields(row: LayoutRow, layout: ColumnLayout): RowFields {
 }
 
 function readColumn(row: LayoutRow, layout: ColumnLayout, column: ColumnName): string {
+  if (column === "tariffSubheading" && !layout.hasTariffSubheading) return "";
   const [min, max] = columnBounds(layout, column);
   return joinFragments(row.items.filter((item) => item.column >= min && item.column < max));
 }
 
 function columnBounds(layout: ColumnLayout, column: ColumnName): [number, number] {
-  const entries = (Object.entries(layout) as Array<[ColumnName, number]>).sort((a, b) => a[1] - b[1]);
+  const entries = (["item", "tariffSubheading", "description", "rate"] as const)
+    .filter((name) => name !== "tariffSubheading" || layout.hasTariffSubheading)
+    .map((name): [ColumnName, number] => [name, layout[name]])
+    .sort((a, b) => a[1] - b[1]);
   const index = entries.findIndex(([name]) => name === column);
   const previous = entries[index - 1];
   const current = entries[index];
@@ -371,7 +391,7 @@ function parseExciseDutyRate(raw: string, warnings: string[]): DutyRateV1 {
     };
   }
 
-  const rand = normalized.match(/^R\s*([\d\s]+(?:[,.]\d+)?)\/(?:(\d+))?(.+)$/i);
+  const rand = normalized.match(/^R\s*([\d\s]+(?:[,.]\d+)?)(?:\s*\/\s*|\s+per\s+)(?:(\d+))?(.+)$/i);
   if (rand) {
     return {
       raw: normalized,
@@ -390,12 +410,12 @@ function parseExciseDutyRate(raw: string, warnings: string[]): DutyRateV1 {
 
   rateWarnings.push(`Unclassified excise duty rate text: ${normalized}`);
   warnings.push(...rateWarnings);
-  return { raw: normalized, kind: /%|formula|note/i.test(normalized) ? "formula" : "unknown", components: [], warnings: rateWarnings };
+  return { raw: normalized, kind: /%|formula|note|rate/i.test(normalized) ? "formula" : "unknown", components: [], warnings: rateWarnings };
 }
 
 function isHeaderRow(row: LayoutRow): boolean {
   const text = rawRowText([row]);
-  return /^(Date:|Tariff Item|Environmental(?: Levy Item)?|Electricity(?: Levy Item| Tariff Heading)|Levy Item|Tariff Subheading|Subheading|Tariff Heading|Article Description|Rate of|SCHEDULE 1|SECTION A|SPECIFIC EXCISE|NOTES?:|\d+\.\s+)/.test(text);
+  return /^(Date(?:\s+as\s+on)?\s*:|Tariff Item|Environmental(?: Levy Item)?|Electricity(?: Levy Item| Tariff Heading)|Fuel(?: Levy Item| Tariff Heading)?|Road Accident Fund|Export Duty|Health(?: Promotion| Tariff)?|Promotion(?: Levy| Subheading)?|Ordinary(?: Levy Item)?|Levy Item|Item(?: Tariff)?|Tariff(?: Subheading| Heading)?|Subheading|Article Description|Descrption|Rate of|SCHEDULE 1|SECTION A|SPECIFIC EXCISE|NOTES?:|\d+\.\s+)/.test(text);
 }
 
 function isContextRow(fields: RowFields): boolean {
@@ -403,7 +423,10 @@ function isContextRow(fields: RowFields): boolean {
 }
 
 function isExciseLineCandidate(fields: RowFields): boolean {
-  return Boolean(isExciseLineItem(fields.item) && fields.tariffSubheading && fields.description);
+  return Boolean(
+    (isExciseLineItem(fields.item) && fields.tariffSubheading && fields.description) ||
+      (looksLikeExciseItem(fields.item) && fields.description && fields.rate)
+  );
 }
 
 function isContinuationRow(fields: RowFields): boolean {
@@ -423,6 +446,10 @@ function isExciseLineItem(value: string): boolean {
 }
 
 function extractPageDate(items: readonly CustomsPdfTextItem[]): string | undefined {
+  const text = compactJoin(items.map((item) => item.text));
+  const pageMatch = text.match(/\bDate(?:\s+as\s+on)?\s*:?\s*(\d{4}-\d{2}-\d{2})\b/i);
+  if (pageMatch) return pageMatch[1];
+
   for (const item of items) {
     const match = item.text.match(/\bDate:\s*(\d{4}-\d{2}-\d{2})\b/);
     if (match) return match[1];
