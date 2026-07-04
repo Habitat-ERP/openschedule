@@ -31,5 +31,6 @@ Verified against SARS public pages on 2026-07-04:
 - Parsers now exist for Schedule 2 trade remedies, Schedule 3 industrial rebates, Schedule 4 rebates,
   Schedule 5 drawbacks/refunds, Schedule 6 excise rebates/refunds, Schedule 1 Part 2A specific excise
   duties, Schedule 1 Part 2B ad valorem excise duties, and Schedule 1 Part 3A plastic-bag environmental
-  levies. No parser exists for the remaining Schedule 1 excise/levy parts or amendment notices.
+  levies, and Schedule 1 Part 3B electricity environmental levies. No parser exists for the remaining
+  Schedule 1 excise/levy parts or amendment notices.
 - `fetchCustomsSources()` fetches PDF descriptors only. HTML amendment registry pages are discovery metadata until a later update-detection or notice-discovery phase.

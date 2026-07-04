@@ -214,10 +214,18 @@ function detectColumnLayout(rows: LayoutRow[]): ColumnLayout {
   for (const row of rows.slice(0, 10)) {
     for (const item of row.items) {
       const text = item.text.trim();
-      if (text === "Tariff Item" || text === "Environmental Levy Item" || text === "Environmental" || text === "Levy Item") layout.item = item.column;
+      if (
+        text === "Tariff Item" ||
+        text === "Environmental Levy Item" ||
+        text === "Environmental" ||
+        text === "Electricity" ||
+        text === "Levy Item"
+      ) {
+        layout.item = item.column;
+      }
       if (text === "Tariff Subheading" || text === "Subheading" || text === "Tariff Heading") layout.tariffSubheading = item.column;
       if (text === "Article Description") layout.description = item.column;
-      if (text.startsWith("Rate of ")) layout.rate = item.column;
+      if (text === "Rate of" || text.startsWith("Rate of ")) layout.rate = item.column;
     }
   }
   return layout;
@@ -387,7 +395,7 @@ function parseExciseDutyRate(raw: string, warnings: string[]): DutyRateV1 {
 
 function isHeaderRow(row: LayoutRow): boolean {
   const text = rawRowText([row]);
-  return /^(Date:|Tariff Item|Environmental(?: Levy Item)?|Levy Item|Tariff Subheading|Subheading|Tariff Heading|Article Description|Rate of |SCHEDULE 1|SECTION A|SPECIFIC EXCISE|NOTES?:|\d+\.\s+)/.test(text);
+  return /^(Date:|Tariff Item|Environmental(?: Levy Item)?|Electricity(?: Levy Item| Tariff Heading)|Levy Item|Tariff Subheading|Subheading|Tariff Heading|Article Description|Rate of|SCHEDULE 1|SECTION A|SPECIFIC EXCISE|NOTES?:|\d+\.\s+)/.test(text);
 }
 
 function isContextRow(fields: RowFields): boolean {

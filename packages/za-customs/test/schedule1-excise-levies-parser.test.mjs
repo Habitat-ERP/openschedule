@@ -207,6 +207,46 @@ test("parses Schedule 1 Part 3A environmental levy rows", () => {
   assert.equal(result.exciseLevyLines[1].validFrom, "2024-04-01");
 });
 
+test("parses Schedule 1 Part 3B electricity levy rows", () => {
+  const result = parseSchedule1ExciseLeviesTextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("Date: 2012-07-01", 30, 36),
+        item("SCHEDULE 1 / PART 3B", 48, 36),
+        item("Electricity", 72, 39),
+        item("Tariff Heading", 72, 115),
+        item("Article Description", 72, 210),
+        item("Rate of", 72, 702),
+        item("Levy Item", 87, 39),
+        item("Electricity Levy", 87, 702),
+        item("148.00", 102, 39),
+        item("ELECTRICAL ENERGY", 102, 115),
+        item("148.01.01", 117, 39),
+        item("2716.00", 117, 115),
+        item("Electricity generated in the Republic, subject to the Notes hereto", 117, 210),
+        item("3,5c/kW.h", 117, 702)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.contextRows, 1);
+  assert.equal(result.metrics.candidateRows, 1);
+  assert.equal(result.metrics.exciseLevyLines, 1);
+  assert.equal(result.metrics.rejectedRows, 0);
+  assert.equal(result.exciseLevyLines[0].part, "3B");
+  assert.equal(result.exciseLevyLines[0].item, "148.01.01");
+  assert.equal(result.exciseLevyLines[0].normalizedTariffSubheading, "271600");
+  assert.equal(result.exciseLevyLines[0].rate.kind, "specific");
+  assert.deepEqual(result.exciseLevyLines[0].rate.components[0], {
+    amount: 3.5,
+    currency: "ZAc",
+    perQuantity: 1,
+    unit: "kW.h"
+  });
+  assert.equal(result.exciseLevyLines[0].validFrom, "2012-07-01");
+});
+
 test("optionally parses the live cached SARS Schedule 1 Part 2A PDF when OPENSCHEDULE_SARS_SCHEDULE1_EXCISE_LEVIES_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE1_EXCISE_LEVIES_PDF_PATH;
   if (!pdfPath) {
@@ -243,5 +283,18 @@ test("optionally parses the live cached SARS Schedule 1 Part 3A PDF when OPENSCH
   const result = await parseSchedule1ExciseLeviesPdf({ pdfPath, pages: [3] });
   assert.ok(result.exciseLevyLines.length > 2);
   assert.ok(result.exciseLevyLines.some((line) => line.item === "147.01.01" && line.rate.raw === "32c/bag"));
+  assert.equal(result.exciseLevyLines[0].sourceTrace[0].sourceDocumentSha256.length, 64);
+});
+
+test("optionally parses the live cached SARS Schedule 1 Part 3B PDF when OPENSCHEDULE_SARS_SCHEDULE1_PART3B_PDF_PATH is set", async (t) => {
+  const pdfPath = process.env.OPENSCHEDULE_SARS_SCHEDULE1_PART3B_PDF_PATH;
+  if (!pdfPath) {
+    t.skip("Set OPENSCHEDULE_SARS_SCHEDULE1_PART3B_PDF_PATH to run the local SARS Schedule 1 Part 3B parser smoke check.");
+    return;
+  }
+
+  const result = await parseSchedule1ExciseLeviesPdf({ pdfPath, pages: [3] });
+  assert.ok(result.exciseLevyLines.length > 0);
+  assert.ok(result.exciseLevyLines.some((line) => line.item === "148.01.01" && line.rate.raw === "3,5c/kW.h"));
   assert.equal(result.exciseLevyLines[0].sourceTrace[0].sourceDocumentSha256.length, 64);
 });
