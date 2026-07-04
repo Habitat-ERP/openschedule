@@ -118,6 +118,8 @@ test("parses tariff rows from positioned text with continuations and warnings", 
   assert.equal(result.metrics.candidateRows, 9);
   assert.equal(result.metrics.contextRows, 2);
   assert.equal(result.metrics.rejectedRows, 2);
+  assert.equal(result.pageMetrics.length, 2);
+  assert.equal(result.pageMetrics[0].rejectedRows, 2);
   assert.equal(result.tariffLines.length, 5);
   assert.equal(result.tariffLines[0].tariffCode, "0001.10");
   assert.equal(result.tariffLines[0].normalizedTariffCode, "000110");
@@ -150,6 +152,81 @@ test("parses tariff rows from positioned text with continuations and warnings", 
   assert.ok(result.tariffLines[4].warnings.some((warning) => warning.includes("Qualified mercosur rate text")));
 });
 
+test("does not fold note or abbreviation rows into nearby context and tariff lines", () => {
+  const result = parseSchedule1Part1TextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("00.01", 100, 39),
+        item("Synthetic heading:", 100, 142),
+        item("1. This note must stay out", 110, 142),
+        item("0001.10", 130, 39),
+        item("7", 130, 118),
+        item("--", 130, 142),
+        item("Synthetic goods", 130, 176),
+        item("kg", 130, 448),
+        item("10%", 130, 486),
+        item("Cu - Copper", 140, 39),
+        item("0,4", 140, 142)
+      ])
+    ]
+  });
+
+  const [line] = result.tariffLines;
+
+  assert.equal(line.normalizedDescription, "Synthetic goods");
+  assert.equal(line.context[0].normalizedDescription, "Synthetic heading");
+  assert.doesNotMatch(line.sourceTrace[0].text, /Copper|note must stay out|0,4/);
+  assert.doesNotMatch(line.context[0].sourceTrace[0].text, /note must stay out/);
+  assert.ok(!line.warnings.some((warning) => warning.includes("continued across layout rows")));
+});
+
+test("keeps tariff rows with missing check digits as low-confidence tariff lines", () => {
+  const result = parseSchedule1Part1TextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("0001.10", 100, 39),
+        item("--", 100, 142),
+        item("Synthetic goods", 100, 176),
+        item("kg", 100, 448),
+        item("10%", 100, 486)
+      ])
+    ]
+  });
+
+  assert.equal(result.metrics.contextRows, 0);
+  assert.equal(result.tariffLines.length, 1);
+  assert.equal(result.tariffLines[0].tariffCode, "0001.10");
+  assert.ok(result.tariffLines[0].warnings.includes("Missing check digit."));
+  assert.ok(result.tariffLines[0].parseConfidence < 1);
+});
+
+test("keeps a blank general rate visible when only a far-right preference rate is present", () => {
+  const result = parseSchedule1Part1TextPages({
+    sourceDocumentSha256,
+    pages: [
+      page([
+        item("4414.00", 100, 39),
+        item("8", 100, 118),
+        item("Wooden frames for paintings, photographs, mirrors or similar objects", 100, 142),
+        item("kg", 100, 448),
+        item("8%", 100, 759)
+      ])
+    ]
+  });
+
+  const [line] = result.tariffLines;
+
+  assert.equal(line.tariffCode, "4414.00");
+  assert.equal(line.rates.general.kind, "unknown");
+  assert.equal(line.rates.general.raw, "");
+  assert.equal(line.rates.afcfta.kind, "ad_valorem");
+  assert.equal(line.rates.afcfta.raw, "8%");
+  assert.ok(line.warnings.includes("Missing general rate."));
+  assert.ok(line.parseConfidence < 0.85);
+});
+
 test("optionally parses the live cached SARS PDF when OPENSCHEDULE_SARS_PDF_PATH is set", async (t) => {
   const pdfPath = process.env.OPENSCHEDULE_SARS_PDF_PATH;
   if (!pdfPath) {
@@ -157,8 +234,11 @@ test("optionally parses the live cached SARS PDF when OPENSCHEDULE_SARS_PDF_PATH
     return;
   }
 
-  const result = await parseSchedule1Part1Pdf({ pdfPath, pages: [2, 100] });
+  const result = await parseSchedule1Part1Pdf({ pdfPath, pages: [28, 100, 635, 702] });
   assert.ok(result.tariffLines.length > 10);
+  assert.ok(result.tariffLines.some((line) => line.tariffCode === "0307.39.10"));
   assert.ok(result.tariffLines.some((line) => line.tariffCode === "1806.10.05"));
+  assert.ok(result.tariffLines.some((line) => line.tariffCode === "8703.23.90"));
+  assert.ok(result.tariffLines.some((line) => line.tariffCode === "9801.00.10"));
   assert.equal(result.tariffLines[0].sourceTrace[0].sourceDocumentSha256.length, 64);
 });

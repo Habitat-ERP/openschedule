@@ -23,6 +23,7 @@ import {
   CustomsDutyEstimateV1Schema,
   CustomsRulesetV1Schema,
   Schedule1ParseResultV1Schema,
+  Schedule1QaReportV1Schema,
   TariffLineV1Schema,
   buildCustomsRulesetFromPdf,
   diffCustomsRulesets,
@@ -62,6 +63,7 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/za-customs/duty-estimate.v1": CustomsDutyEstimateV1Schema,
   "openschedule://schemas/za-customs/customs-ruleset.v1": CustomsRulesetV1Schema,
   "openschedule://schemas/za-customs/schedule1-parse-result.v1": Schedule1ParseResultV1Schema,
+  "openschedule://schemas/za-customs/schedule1-qa-report.v1": Schedule1QaReportV1Schema,
   "openschedule://schemas/za-customs/tariff-line.v1": TariffLineV1Schema
 };
 

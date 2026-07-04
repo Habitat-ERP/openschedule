@@ -75,6 +75,7 @@ export function buildCustomsRuleset(options: BuildCustomsRulesetOptions): Custom
       warnings: [...options.parseResult.warnings]
     },
     parseMetrics: { ...options.parseResult.metrics },
+    pageMetrics: options.parseResult.pageMetrics?.map((page) => ({ ...page })),
     tariffLines
   };
   ruleset.manifest.rulesetId = calculateCustomsRulesetId(ruleset);

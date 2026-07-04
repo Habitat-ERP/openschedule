@@ -60,6 +60,7 @@ export interface CustomsRulesetV1 {
   schemaVersion: "za-customs.customs-ruleset.v1";
   manifest: RulesetManifestV1;
   parseMetrics: Schedule1ParseMetricsV1;
+  pageMetrics?: Schedule1ParsePageMetricsV1[];
   tariffLines: TariffLineV1[];
 }
 
@@ -112,9 +113,81 @@ export interface Schedule1ParseMetricsV1 {
   rejectedRows: number;
 }
 
+export interface Schedule1ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  tariffLines: number;
+  rejectedRows: number;
+}
+
 export interface Schedule1ParseResultV1 {
   schemaVersion: "za-customs.schedule1-parse-result.v1";
   tariffLines: TariffLineV1[];
   warnings: string[];
   metrics: Schedule1ParseMetricsV1;
+  pageMetrics?: Schedule1ParsePageMetricsV1[];
+}
+
+export interface Schedule1LineInspectionV1 {
+  schemaVersion: "za-customs.schedule1-line-inspection.v1";
+  tariffCode: string;
+  normalizedTariffCode: string;
+  description: string;
+  normalizedDescription: string;
+  hierarchy: Array<{
+    code: string;
+    normalizedCode: string;
+    description: string;
+    normalizedDescription: string;
+    sourcePage?: number | null;
+    locator?: string | null;
+    rawSourceText?: string | null;
+  }>;
+  rates: Partial<Record<CustomsRateColumnV1, Pick<DutyRateV1, "raw" | "kind" | "warnings">>>;
+  sourcePage?: number | null;
+  locator?: string | null;
+  rawSourceText?: string | null;
+  warnings: string[];
+  confidence: number;
+}
+
+export type Schedule1QaIssueCategoryV1 =
+  | "line_without_context"
+  | "context_code_prefix_mismatch"
+  | "suspicious_context_jump"
+  | "low_confidence_line"
+  | "unknown_or_formula_rate"
+  | "continuation_row"
+  | "duplicate_normalized_code"
+  | "page_high_rejection_count";
+
+export interface Schedule1QaIssueV1 {
+  category: Schedule1QaIssueCategoryV1;
+  severity: "info" | "warning" | "error";
+  message: string;
+  tariffCode?: string | null;
+  normalizedTariffCode?: string | null;
+  page?: number | null;
+  sourceTrace?: SourceTraceV1[];
+}
+
+export interface Schedule1QaReportV1 {
+  schemaVersion: "za-customs.schedule1-qa-report.v1";
+  summary: {
+    tariffLines: number;
+    linesWithoutContext: number;
+    contextPrefixMismatches: number;
+    suspiciousContextJumps: number;
+    lowConfidenceLines: number;
+    unknownOrFormulaRateLines: number;
+    continuationRows: number;
+    duplicateNormalizedCodes: number;
+    pagesWithHighRejectionCounts: number;
+  };
+  issues: Schedule1QaIssueV1[];
+  reviewSet: Schedule1LineInspectionV1[];
+  warnings: string[];
 }

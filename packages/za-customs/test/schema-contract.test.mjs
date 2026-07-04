@@ -10,6 +10,7 @@ import {
   CustomsDutyEstimateV1Schema,
   CustomsRulesetV1Schema,
   Schedule1ParseResultV1Schema,
+  Schedule1QaReportV1Schema,
   TariffLineV1Schema
 } from "../dist/src/index.js";
 
@@ -22,6 +23,7 @@ test("schema versions are stable", () => {
   assert.equal(CustomsRulesetV1Schema.properties.schemaVersion.const, "za-customs.customs-ruleset.v1");
   assert.equal(CustomsDutyEstimateV1Schema.properties.schemaVersion.const, "za-customs.duty-estimate.v1");
   assert.equal(Schedule1ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule1-parse-result.v1");
+  assert.equal(Schedule1QaReportV1Schema.properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
 });
 
 test("tariff line contract keeps audit fields required", () => {
@@ -34,4 +36,7 @@ test("tariff line contract keeps audit fields required", () => {
 test("customs ruleset contract keeps parser metrics", () => {
   assert.ok(CustomsRulesetV1Schema.required.includes("parseMetrics"));
   assert.ok(CustomsRulesetV1Schema.properties.parseMetrics.required.includes("tariffLines"));
+  assert.ok(CustomsRulesetV1Schema.properties.pageMetrics);
+  assert.ok(Schedule1ParseResultV1Schema.properties.pageMetrics);
+  assert.ok(Schedule1QaReportV1Schema.required.includes("summary"));
 });

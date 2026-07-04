@@ -1,4 +1,11 @@
-import { CUSTOMS_RATE_COLUMNS, type DutyRateV1, type Schedule1ParseResultV1, type TariffLineContextV1, type TariffLineV1 } from "./types.js";
+import {
+  CUSTOMS_RATE_COLUMNS,
+  type DutyRateV1,
+  type Schedule1ParsePageMetricsV1,
+  type Schedule1ParseResultV1,
+  type TariffLineContextV1,
+  type TariffLineV1
+} from "./types.js";
 import { extractCustomsPdfTextItems, type CustomsPdfTextItem, type CustomsPdfTextPage } from "./pdf-text.js";
 
 export interface ParseSchedule1Part1PdfOptions {
@@ -77,12 +84,22 @@ export function parseSchedule1Part1TextPages(
   };
   const warnings: string[] = [];
   const tariffLines: TariffLineV1[] = [];
+  const pageMetrics: Schedule1ParsePageMetricsV1[] = [];
   let activeContexts: TariffLineContextV1[] = [];
 
   for (const page of options.pages) {
     metrics.textItems += page.items.length;
     const pageRows = groupRows(page);
     metrics.layoutRows += pageRows.length;
+    const currentPageMetrics: Schedule1ParsePageMetricsV1 = {
+      pageNumber: page.pageNumber,
+      textItems: page.items.length,
+      layoutRows: pageRows.length,
+      candidateRows: 0,
+      contextRows: 0,
+      tariffLines: 0,
+      rejectedRows: 0
+    };
     const layout = detectColumnLayout(pageRows);
     const pageDate = options.validFrom ?? extractPageDate(page.items);
 
@@ -99,10 +116,12 @@ export function parseSchedule1Part1TextPages(
           const line = buildTariffLine(pending, options.sourceDocumentSha256, pageDate);
           tariffLines.push(line);
           metrics.tariffLines += 1;
+          currentPageMetrics.tariffLines += 1;
         }
 
         metrics.candidateRows += 1;
-        if (isHierarchyContext(row, layout, fields)) {
+        currentPageMetrics.candidateRows += 1;
+        if (isHierarchyContext(row, layout, fields) && !isTariffLineWithoutCheckDigit(fields)) {
           const context = buildTariffLineContext(row, layout, fields, options.sourceDocumentSha256);
           activeContexts = [
             ...activeContexts.filter(
@@ -116,12 +135,14 @@ export function parseSchedule1Part1TextPages(
             lastRow: row.row
           };
           metrics.contextRows += 1;
+          currentPageMetrics.contextRows += 1;
           pending = null;
           continue;
         }
 
         if (!isTariffCandidate(fields)) {
           metrics.rejectedRows += 1;
+          currentPageMetrics.rejectedRows += 1;
           pending = null;
           continue;
         }
@@ -142,7 +163,10 @@ export function parseSchedule1Part1TextPages(
 
       if (pending && row.row - pending.lastRow <= CONTINUATION_ROW_GAP) {
         const continuation = readRowFields(row, layout);
-        if (continuation.description || CUSTOMS_RATE_COLUMNS.some((column) => continuation[column])) {
+        if (
+          !isNonTariffContinuationRow(row, layout, continuation) &&
+          (continuation.description || CUSTOMS_RATE_COLUMNS.some((column) => continuation[column]))
+        ) {
           pending.continuationRows.push({ row, fields: continuation });
           pending.lastRow = row.row;
         }
@@ -151,7 +175,8 @@ export function parseSchedule1Part1TextPages(
 
       if (pendingContext && row.row - pendingContext.lastRow <= CONTINUATION_ROW_GAP) {
         const continuation = readContextDescription(row, layout);
-        if (continuation) {
+        const continuationFields = readRowFields(row, layout);
+        if (continuation && !isNonTariffContinuationRow(row, layout, continuationFields)) {
           pendingContext.rows.push(row);
           pendingContext.lastRow = row.row;
           pendingContext.context.description = compactJoin([pendingContext.context.description, continuation]);
@@ -166,7 +191,9 @@ export function parseSchedule1Part1TextPages(
       const line = buildTariffLine(pending, options.sourceDocumentSha256, pageDate);
       tariffLines.push(line);
       metrics.tariffLines += 1;
+      currentPageMetrics.tariffLines += 1;
     }
+    pageMetrics.push(currentPageMetrics);
   }
 
   if (!tariffLines.length) {
@@ -177,7 +204,8 @@ export function parseSchedule1Part1TextPages(
     schemaVersion: "za-customs.schedule1-parse-result.v1",
     tariffLines,
     warnings,
-    metrics
+    metrics,
+    pageMetrics
   };
 }
 
@@ -356,7 +384,7 @@ function buildTariffLine(pending: PendingLine, sourceDocumentSha256: string, pag
         text: rawRowText([pending.row, ...pending.continuationRows.map((row) => row.row)])
       }
     ],
-    parseConfidence: Math.max(0, 1 - lineWarnings.length * 0.12),
+    parseConfidence: calculateParseConfidence(lineWarnings),
     warnings: lineWarnings
   };
 }
@@ -492,11 +520,37 @@ function isHeaderRow(row: LayoutRow): boolean {
 }
 
 function isTariffCandidate(fields: RowFields): boolean {
-  return isTariffCode(fields.tariffCode) && /^\d$/.test(fields.checkDigit) && Boolean(fields.general || fields.description);
+  return (
+    isTariffCode(fields.tariffCode) &&
+    (!fields.checkDigit || /^\d$/.test(fields.checkDigit)) &&
+    Boolean(fields.general || fields.description) &&
+    Boolean(fields.checkDigit || isSimpleStatisticalUnit(fields.statisticalUnit))
+  );
 }
 
 function isHierarchyContext(row: LayoutRow, layout: ColumnLayout, fields: RowFields): boolean {
   return Boolean(isHierarchyCode(fields.tariffCode) && !fields.checkDigit && readContextDescription(row, layout));
+}
+
+function isTariffLineWithoutCheckDigit(fields: RowFields): boolean {
+  return isTariffCode(fields.tariffCode) && !fields.checkDigit && isSimpleStatisticalUnit(fields.statisticalUnit);
+}
+
+function isSimpleStatisticalUnit(value: string): boolean {
+  return /^(?:kg|u|li|m|t|carat|2u|1000 u|1000 kW\.h)$/i.test(value.trim());
+}
+
+function isNonTariffContinuationRow(row: LayoutRow, layout: ColumnLayout, fields: RowFields): boolean {
+  const text = rawRowText([row]).trim();
+  const [tariffCodeMin, tariffCodeMax] = columnBounds(layout, "tariffCode");
+  const hasStrayFirstColumnText = row.items.some((item) => item.column >= tariffCodeMin && item.column < tariffCodeMax);
+  return (
+    isHeaderRow(row) ||
+    /^\d+\.\s+/.test(text) ||
+    /^[A-Z][A-Za-z]{0,6}\s+-\s+\S/.test(text) ||
+    (Boolean(fields.tariffCode) && !isTariffCode(fields.tariffCode) && !isHierarchyCode(fields.tariffCode)) ||
+    hasStrayFirstColumnText
+  );
 }
 
 function isTariffCode(value: string): boolean {
@@ -548,6 +602,21 @@ function normalizeDescription(description: string): string {
     .replace(/\s+\)/g, ")")
     .replace(/:$/, "")
     .trim();
+}
+
+function calculateParseConfidence(warnings: readonly string[]): number {
+  const penalty = warnings.reduce((total, warning) => total + warningPenalty(warning), 0);
+  return Math.max(0, Number((1 - penalty).toFixed(2)));
+}
+
+function warningPenalty(warning: string): number {
+  if (warning.startsWith("Missing general rate")) return 0.32;
+  if (warning.startsWith("Missing statistical unit")) return 0.2;
+  if (warning.startsWith("Missing check digit")) return 0.18;
+  if (warning.startsWith("Unclassified")) return 0.24;
+  if (warning.startsWith("Qualified")) return 0.18;
+  if (warning.startsWith("Description or rate text continued")) return 0.1;
+  return 0.12;
 }
 
 function average(left: number, right: number): number {

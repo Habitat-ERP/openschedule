@@ -6,6 +6,8 @@ Build OpenSchedule by Habitat from `SPEC.md`, `README.md`, and `NOTICE`.
 
 OpenSchedule is now an npm workspace with source fetching, customs parsing, ruleset building, estimation, CLI wrappers, and MCP wrappers implemented for the South African SARS Schedule 1 Part 1 MVP.
 
+See `ROADMAP.md` for the customs data roadmap and mandatory pre-code phase gate.
+
 ## Current Repo State
 
 Path:
@@ -86,7 +88,7 @@ npm test
 Current expected result:
 
 ```text
-27 passed, 1 optional live parser smoke test skipped
+33 passed, 1 optional live parser smoke test skipped
 ```
 
 Optional live parser smoke:
@@ -121,16 +123,9 @@ If a decision changes scope or adds a dependency, pause and explain the tradeoff
 
 ## Recommended Next Phase
 
-Next likely phase: polish and hardening before broadening scope.
+Next likely phase: follow `ROADMAP.md`, starting with SARS customs source registry and update detection.
 
-Good candidates:
-
-1. Add an optional full live build smoke for CLI/MCP behind `OPENSCHEDULE_SARS_PDF_PATH`.
-2. Improve parser QA reports around rejected rows and low-confidence lines.
-3. Add README usage examples for the package API, CLI, and MCP.
-4. Decide whether Phase 8 should be docs/release packaging or deeper parser QA.
-
-Do not start Schedule 2, rebates, amendment application, VAT, FX, OpenAPI, or Habitat integration until explicitly requested.
+Do not start Schedule 2, rebates, amendment application, VAT, FX, OpenAPI, search/classification, or Habitat integration until the relevant roadmap phase has had its sub-agent research, philosophy adherence, and quality pass.
 
 ## Open Questions To Revisit
 

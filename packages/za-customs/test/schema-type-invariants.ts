@@ -1,5 +1,5 @@
 import type { RulesetManifestV1, SourceTraceV1 } from "@openschedule/core";
-import type { CustomsDutyEstimateV1, CustomsRulesetV1, TariffLineV1 } from "../src/index.js";
+import type { CustomsDutyEstimateV1, CustomsRulesetV1, Schedule1QaReportV1, TariffLineV1 } from "../src/index.js";
 
 const sourceTrace = {
   schemaVersion: "core.source-trace.v1",
@@ -62,6 +62,17 @@ const ruleset = {
     tariffLines: 1,
     rejectedRows: 0
   },
+  pageMetrics: [
+    {
+      pageNumber: 1,
+      textItems: 1,
+      layoutRows: 1,
+      candidateRows: 1,
+      contextRows: 0,
+      tariffLines: 1,
+      rejectedRows: 0
+    }
+  ],
   tariffLines: [tariffLine]
 } satisfies CustomsRulesetV1;
 
@@ -77,4 +88,23 @@ const estimate = {
   warnings: []
 } satisfies CustomsDutyEstimateV1;
 
+const qaReport = {
+  schemaVersion: "za-customs.schedule1-qa-report.v1",
+  summary: {
+    tariffLines: 1,
+    linesWithoutContext: 0,
+    contextPrefixMismatches: 0,
+    suspiciousContextJumps: 0,
+    lowConfidenceLines: 0,
+    unknownOrFormulaRateLines: 0,
+    continuationRows: 0,
+    duplicateNormalizedCodes: 0,
+    pagesWithHighRejectionCounts: 0
+  },
+  issues: [],
+  reviewSet: [],
+  warnings: []
+} satisfies Schedule1QaReportV1;
+
 void estimate;
+void qaReport;

@@ -69,6 +69,57 @@
           "minimum": 0
         }
       }
+    },
+    "pageMetrics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pageMetrics"
+      }
+    }
+  },
+  "$defs": {
+    "pageMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageNumber",
+        "textItems",
+        "layoutRows",
+        "candidateRows",
+        "contextRows",
+        "tariffLines",
+        "rejectedRows"
+      ],
+      "properties": {
+        "pageNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "textItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layoutRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contextRows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tariffLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejectedRows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     }
   }
 }

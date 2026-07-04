@@ -134,6 +134,7 @@ test("outputs schemas by group and schema name", async () => {
 
   assert.equal(all.exitCode, 0);
   assert.equal(all.json["tariff-line"].properties.schemaVersion.const, "za-customs.tariff-line.v1");
+  assert.equal(all.json["schedule1-qa-report"].properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
   assert.equal(one.json.properties.schemaVersion.const, "za-customs.tariff-line.v1");
 });
 
@@ -146,6 +147,23 @@ test("looks up tariff lines and lists available rates", async () => {
     assert.equal(lookup.exitCode, 0);
     assert.equal(lookup.json.tariffCode, "0001.10");
     assert.deepEqual(rates.json.map((option) => option.column), ["general", "sadc"]);
+  });
+});
+
+test("inspects parser QA lines and reports QA queues", async () => {
+  await withTempDir(async (dir) => {
+    const path = await writeRuleset(dir, "ruleset.json", ruleset([tariffLine()]));
+    const inspection = await invoke(["qa", "inspect", path, "--tariff-code", "0001.10"]);
+    const report = await invoke(["qa", "report", path]);
+
+    assert.equal(inspection.exitCode, 0);
+    assert.equal(inspection.json[0].tariffCode, "0001.10");
+    assert.equal(inspection.json[0].sourcePage, 1);
+    assert.equal(inspection.json[0].rates.general.raw, "10%");
+    assert.equal(report.exitCode, 0);
+    assert.equal(report.json.schemaVersion, "za-customs.schedule1-qa-report.v1");
+    assert.equal(report.json.summary.tariffLines, 1);
+    assert.equal(report.json.summary.linesWithoutContext, 1);
   });
 });
 

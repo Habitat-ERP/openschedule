@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/schedule1-qa-report.v1",
+  "title": "Schedule 1 QA Report V1",
+  "description": "Quality assurance report for SARS Schedule 1 Part 1 parser output, including inspection records and parser uncertainty queues.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "summary",
+    "issues",
+    "reviewSet",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.schedule1-qa-report.v1"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tariffLines",
+        "linesWithoutContext",
+        "contextPrefixMismatches",
+        "suspiciousContextJumps",
+        "lowConfidenceLines",
+        "unknownOrFormulaRateLines",
+        "continuationRows",
+        "duplicateNormalizedCodes",
+        "pagesWithHighRejectionCounts"
+      ],
+      "properties": {
+        "tariffLines": { "type": "integer", "minimum": 0 },
+        "linesWithoutContext": { "type": "integer", "minimum": 0 },
+        "contextPrefixMismatches": { "type": "integer", "minimum": 0 },
+        "suspiciousContextJumps": { "type": "integer", "minimum": 0 },
+        "lowConfidenceLines": { "type": "integer", "minimum": 0 },
+        "unknownOrFormulaRateLines": { "type": "integer", "minimum": 0 },
+        "continuationRows": { "type": "integer", "minimum": 0 },
+        "duplicateNormalizedCodes": { "type": "integer", "minimum": 0 },
+        "pagesWithHighRejectionCounts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "reviewSet": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/inspection"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "severity",
+        "message"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "line_without_context",
+            "context_code_prefix_mismatch",
+            "suspicious_context_jump",
+            "low_confidence_line",
+            "unknown_or_formula_rate",
+            "continuation_row",
+            "duplicate_normalized_code",
+            "page_high_rejection_count"
+          ]
+        },
+        "severity": {
+          "enum": ["info", "warning", "error"]
+        },
+        "message": { "type": "string" },
+        "tariffCode": { "type": ["string", "null"] },
+        "normalizedTariffCode": { "type": ["string", "null"] },
+        "page": { "type": ["integer", "null"], "minimum": 1 },
+        "sourceTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "openschedule://schemas/core/source-trace.v1"
+          }
+        }
+      }
+    },
+    "inspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "tariffCode",
+        "normalizedTariffCode",
+        "description",
+        "normalizedDescription",
+        "hierarchy",
+        "rates",
+        "warnings",
+        "confidence"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "za-customs.schedule1-line-inspection.v1"
+        },
+        "tariffCode": { "type": "string" },
+        "normalizedTariffCode": { "type": "string" },
+        "description": { "type": "string" },
+        "normalizedDescription": { "type": "string" },
+        "hierarchy": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "normalizedCode",
+              "description",
+              "normalizedDescription"
+            ],
+            "properties": {
+              "code": { "type": "string" },
+              "normalizedCode": { "type": "string" },
+              "description": { "type": "string" },
+              "normalizedDescription": { "type": "string" },
+              "sourcePage": { "type": ["integer", "null"], "minimum": 1 },
+              "locator": { "type": ["string", "null"] },
+              "rawSourceText": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "rates": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "general": { "$ref": "#/$defs/rateSummary" },
+            "euUk": { "$ref": "#/$defs/rateSummary" },
+            "efta": { "$ref": "#/$defs/rateSummary" },
+            "sadc": { "$ref": "#/$defs/rateSummary" },
+            "mercosur": { "$ref": "#/$defs/rateSummary" },
+            "afcfta": { "$ref": "#/$defs/rateSummary" }
+          }
+        },
+        "sourcePage": { "type": ["integer", "null"], "minimum": 1 },
+        "locator": { "type": ["string", "null"] },
+        "rawSourceText": { "type": ["string", "null"] },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "rateSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw",
+        "kind",
+        "warnings"
+      ],
+      "properties": {
+        "raw": { "type": "string" },
+        "kind": {
+          "enum": ["free", "ad_valorem", "specific", "compound", "formula", "unknown"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -20,18 +20,23 @@ import {
 } from "@openschedule/za-sars";
 import {
   buildCustomsRulesetFromPdf,
+  createSchedule1QaReport,
   diffCustomsRulesets,
   estimateCustomsDuty,
   findTariffLine,
+  inspectSchedule1TariffLines,
   listRateOptions,
   validateCustomsRuleset,
   CustomsDutyEstimateV1Schema,
   CustomsRulesetV1Schema,
   CUSTOMS_RATE_COLUMNS,
   Schedule1ParseResultV1Schema,
+  Schedule1QaReportV1Schema,
   TariffLineV1Schema,
   type CustomsRateColumnV1,
-  type CustomsRulesetV1
+  type CustomsRulesetV1,
+  type Schedule1ParseResultV1,
+  type Schedule1QaSource
 } from "@openschedule/za-customs";
 
 type Write = (text: string) => void;
@@ -83,6 +88,9 @@ export async function runCli(args = process.argv.slice(2), runtime: CliRuntime =
         writeJson(stdout, estimate);
         return 0;
       }
+      case "qa":
+        writeJson(stdout, await runQa(rest));
+        return 0;
       case "schemas":
         writeJson(stdout, runSchemas(rest));
         return 0;
@@ -198,6 +206,36 @@ async function runEstimate(args: string[]): Promise<ReturnType<typeof estimateCu
   });
 }
 
+async function runQa(args: string[]): Promise<unknown> {
+  const [subcommand, ...rest] = args;
+  if (subcommand === "inspect") return runQaInspect(rest);
+  if (subcommand === "report") return runQaReport(rest);
+  throw new UsageError("qa requires inspect or report.");
+}
+
+async function runQaInspect(args: string[]): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    "tariff-code": { type: "string", multiple: true }
+  });
+  if (positionals.length !== 1) throw new UsageError("qa inspect requires <ruleset-or-parse-result.json>.");
+  return inspectSchedule1TariffLines(
+    await readQaSource(positionals[0]),
+    stringOptions(values["tariff-code"], "--tariff-code")
+  );
+}
+
+async function runQaReport(args: string[]): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    "low-confidence": { type: "string" },
+    "high-rejection-page": { type: "string" }
+  });
+  if (positionals.length !== 1) throw new UsageError("qa report requires <ruleset-or-parse-result.json>.");
+  return createSchedule1QaReport(await readQaSource(positionals[0]), {
+    lowConfidenceThreshold: optionalFraction(values["low-confidence"], "--low-confidence") ?? undefined,
+    highRejectionPageThreshold: optionalInteger(values["high-rejection-page"], "--high-rejection-page") ?? undefined
+  });
+}
+
 function runSchemas(args: string[]): unknown {
   if (args.length < 1 || args.length > 2) throw new UsageError("schemas requires <core|za-sars|za-customs> [schema-name].");
   const schemas = schemaGroups()[args[0]];
@@ -233,6 +271,16 @@ async function readRuleset(path: string): Promise<CustomsRulesetV1> {
   const ruleset = (await readJson(path)) as CustomsRulesetV1;
   assertValidRuleset(ruleset, path);
   return ruleset;
+}
+
+async function readQaSource(path: string): Promise<Schedule1QaSource> {
+  const source = await readJson(path);
+  if (isCustomsRuleset(source)) {
+    assertValidRuleset(source, path);
+    return source;
+  }
+  if (isSchedule1ParseResult(source)) return source;
+  throw new OperationalError(`${path} is not a customs ruleset or Schedule 1 parse result.`);
 }
 
 function assertValidRuleset(ruleset: CustomsRulesetV1, label: string): void {
@@ -306,6 +354,26 @@ function optionalNumber(value: unknown, name: string): number | null {
   return number;
 }
 
+function optionalInteger(value: unknown, name: string): number | null {
+  const number = optionalNumber(value, name);
+  if (number === null) return null;
+  if (!Number.isInteger(number)) throw new UsageError(`${name} must be an integer.`);
+  return number;
+}
+
+function optionalFraction(value: unknown, name: string): number | null {
+  const number = optionalNumber(value, name);
+  if (number === null) return null;
+  if (number > 1) throw new UsageError(`${name} must be between 0 and 1.`);
+  return number;
+}
+
+function stringOptions(value: unknown, name: string): string[] {
+  if (typeof value === "string" && value) return [value];
+  if (Array.isArray(value) && value.every((item) => typeof item === "string" && item)) return value;
+  throw new UsageError(`${name} is required.`);
+}
+
 function optionalRateColumn(value: unknown): CustomsRateColumnV1 | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== "string" || !CUSTOMS_RATE_COLUMNS.includes(value as CustomsRateColumnV1)) {
@@ -345,6 +413,7 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
       "duty-estimate": CustomsDutyEstimateV1Schema,
       "customs-ruleset": CustomsRulesetV1Schema,
       "schedule1-parse-result": Schedule1ParseResultV1Schema,
+      "schedule1-qa-report": Schedule1QaReportV1Schema,
       "tariff-line": TariffLineV1Schema
     }
   };
@@ -359,8 +428,22 @@ function usage(): string {
   openschedule lookup <ruleset.json> --tariff-code <code>
   openschedule rates <ruleset.json> --tariff-code <code>
   openschedule estimate <ruleset.json> --tariff-code <code> --effective-date YYYY-MM-DD [--customs-value n] [--quantity n --quantity-unit unit] [--rate-column ${CUSTOMS_RATE_COLUMNS.join("|")}]
+  openschedule qa inspect <ruleset-or-parse-result.json> --tariff-code <code> [--tariff-code <code>]
+  openschedule qa report <ruleset-or-parse-result.json> [--low-confidence n] [--high-rejection-page n]
   openschedule schemas <core|za-sars|za-customs> [schema-name]
 `;
+}
+
+function isCustomsRuleset(value: unknown): value is CustomsRulesetV1 {
+  return Boolean(value && typeof value === "object" && (value as CustomsRulesetV1).schemaVersion === "za-customs.customs-ruleset.v1");
+}
+
+function isSchedule1ParseResult(value: unknown): value is Schedule1ParseResultV1 {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      (value as Schedule1ParseResultV1).schemaVersion === "za-customs.schedule1-parse-result.v1"
+  );
 }
 
 if (await isDirectRun()) {
