@@ -11,12 +11,11 @@
     "country",
     "publisher",
     "domain",
+    "family",
+    "documentRole",
     "schedule",
-    "part",
-    "chapterRange",
     "title",
     "sourceFormat",
-    "sourceUpdatedDate",
     "registryPageUrl",
     "sourceUrl"
   ],
@@ -25,7 +24,8 @@
       "const": "za-sars.customs-source.v1"
     },
     "id": {
-      "const": "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1"
+      "type": "string",
+      "pattern": "^ZA_SARS_CUSTOMS_[A-Z0-9_]+$"
     },
     "country": {
       "const": "ZA"
@@ -36,24 +36,57 @@
     "domain": {
       "const": "za-customs"
     },
+    "family": {
+      "enum": [
+        "schedule-1-customs",
+        "schedule-1-excise-levies",
+        "schedule-2-trade-remedies",
+        "rebates-drawbacks-refunds",
+        "amendment-notices"
+      ]
+    },
+    "documentRole": {
+      "enum": [
+        "consolidated-schedule",
+        "amendment-registry"
+      ]
+    },
     "schedule": {
-      "const": "1"
+      "enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        null
+      ]
     },
     "part": {
-      "const": "1"
+      "type": "string",
+      "minLength": 1
+    },
+    "section": {
+      "type": "string",
+      "minLength": 1
     },
     "chapterRange": {
-      "const": "1-99"
+      "type": "string",
+      "minLength": 1
     },
     "title": {
       "type": "string",
       "minLength": 1
     },
     "sourceFormat": {
-      "const": "application/pdf"
+      "enum": [
+        "application/pdf",
+        "text/html"
+      ]
     },
     "sourceUpdatedDate": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "registryPageUrl": {
       "type": "string",

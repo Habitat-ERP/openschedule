@@ -11,3 +11,8 @@ coverage/
 sources/
 rulesets/
 tmp/
+
+# Local agent/session tooling
+.agents/
+.claude/
+.codex/

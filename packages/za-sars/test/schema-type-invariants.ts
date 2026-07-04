@@ -7,6 +7,8 @@ const source = {
   country: "ZA",
   publisher: "SARS",
   domain: "za-customs",
+  family: "schedule-1-customs",
+  documentRole: "consolidated-schedule",
   schedule: "1",
   part: "1",
   chapterRange: "1-99",
