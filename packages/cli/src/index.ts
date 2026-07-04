@@ -33,6 +33,7 @@ import {
   CustomsRulesetV1Schema,
   CUSTOMS_RATE_COLUMNS,
   Schedule1ParseResultV1Schema,
+  Schedule2ParseResultV1Schema,
   Schedule1QaReportV1Schema,
   TariffLineV1Schema,
   type CustomsRateColumnV1,
@@ -427,6 +428,7 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
       "duty-estimate": CustomsDutyEstimateV1Schema,
       "customs-ruleset": CustomsRulesetV1Schema,
       "schedule1-parse-result": Schedule1ParseResultV1Schema,
+      "schedule2-parse-result": Schedule2ParseResultV1Schema,
       "schedule1-qa-report": Schedule1QaReportV1Schema,
       "tariff-line": TariffLineV1Schema
     }

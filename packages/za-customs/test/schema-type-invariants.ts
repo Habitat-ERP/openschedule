@@ -1,5 +1,11 @@
 import type { RulesetManifestV1, SourceTraceV1 } from "@openschedule/core";
-import type { CustomsDutyEstimateV1, CustomsRulesetV1, Schedule1QaReportV1, TariffLineV1 } from "../src/index.js";
+import type {
+  CustomsDutyEstimateV1,
+  CustomsRulesetV1,
+  Schedule1QaReportV1,
+  Schedule2ParseResultV1,
+  TariffLineV1
+} from "../src/index.js";
 
 const sourceTrace = {
   schemaVersion: "core.source-trace.v1",
@@ -106,5 +112,46 @@ const qaReport = {
   warnings: []
 } satisfies Schedule1QaReportV1;
 
+const schedule2ParseResult = {
+  schemaVersion: "za-customs.schedule2-parse-result.v1",
+  tradeRemedyLines: [
+    {
+      schemaVersion: "za-customs.schedule2-trade-remedy-line.v1",
+      item: "201.02",
+      normalizedItem: "20102",
+      tariffHeading: "0207.14.9",
+      normalizedTariffHeading: "0207149",
+      code: "03.07",
+      normalizedCode: "0307",
+      checkDigit: "70",
+      description: "Synthetic trade remedy goods",
+      normalizedDescription: "Synthetic trade remedy goods",
+      rebateItems: ["301.00-399.00"],
+      originatingCountryOrTerritory: "Germany",
+      rate: {
+        raw: "73,33%",
+        kind: "ad_valorem",
+        components: [{ basis: "customs_value", rate: 0.7333 }],
+        warnings: []
+      },
+      validFrom: "2026-06-12",
+      sourceTrace: [sourceTrace],
+      parseConfidence: 1,
+      warnings: []
+    }
+  ],
+  warnings: [],
+  metrics: {
+    pagesParsed: 1,
+    textItems: 1,
+    layoutRows: 1,
+    candidateRows: 1,
+    contextRows: 0,
+    tradeRemedyLines: 1,
+    rejectedRows: 0
+  }
+} satisfies Schedule2ParseResultV1;
+
 void estimate;
 void qaReport;
+void schedule2ParseResult;

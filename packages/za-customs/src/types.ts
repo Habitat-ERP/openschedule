@@ -131,6 +131,66 @@ export interface Schedule1ParseResultV1 {
   pageMetrics?: Schedule1ParsePageMetricsV1[];
 }
 
+export interface Schedule2TradeRemedyContextV1 {
+  item: string;
+  normalizedItem: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+  sourceTrace: SourceTraceV1[];
+}
+
+export interface Schedule2TradeRemedyLineV1 {
+  schemaVersion: "za-customs.schedule2-trade-remedy-line.v1";
+  item: string;
+  normalizedItem: string;
+  tariffHeading: string;
+  normalizedTariffHeading: string;
+  code: string;
+  normalizedCode: string;
+  checkDigit?: string | null;
+  description: string;
+  normalizedDescription: string;
+  rebateItems: string[];
+  originatingCountryOrTerritory: string;
+  rate: DutyRateV1;
+  validFrom: string;
+  context?: Schedule2TradeRemedyContextV1[];
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
+  sourceTrace: SourceTraceV1[];
+  parseConfidence: number;
+  warnings: string[];
+}
+
+export interface Schedule2ParseMetricsV1 {
+  pagesParsed: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  tradeRemedyLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule2ParsePageMetricsV1 {
+  pageNumber: number;
+  textItems: number;
+  layoutRows: number;
+  candidateRows: number;
+  contextRows: number;
+  tradeRemedyLines: number;
+  rejectedRows: number;
+}
+
+export interface Schedule2ParseResultV1 {
+  schemaVersion: "za-customs.schedule2-parse-result.v1";
+  tradeRemedyLines: Schedule2TradeRemedyLineV1[];
+  warnings: string[];
+  metrics: Schedule2ParseMetricsV1;
+  pageMetrics?: Schedule2ParsePageMetricsV1[];
+}
+
 export interface Schedule1LineInspectionV1 {
   schemaVersion: "za-customs.schedule1-line-inspection.v1";
   tariffCode: string;

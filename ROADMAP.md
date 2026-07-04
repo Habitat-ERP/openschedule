@@ -113,25 +113,40 @@ Skip:
 Purpose:
 
 - extend parsing beyond Schedule 1 Part 1 only where the consolidated source layout is understood.
+- cover all registered consolidated SARS schedule PDFs over successive family slices.
 
 Scope:
 
+- target all current consolidated schedule PDFs declared in `SARS_CUSTOMS_SOURCES`;
 - add one document family at a time;
+- keep distinct legal objects distinct: ordinary tariff lines, trade remedy lines, rebate/drawback/refund lines, excise/levy lines, and notes;
 - keep family-specific parsers only when layouts truly differ;
 - preserve source trace, parse confidence, QA reports, and ruleset manifests.
 
+Suggested implementation order:
+
+- Schedule 2 trade remedies;
+- Schedule 3 industrial rebates;
+- Schedule 4 general rebates;
+- Schedule 5 drawbacks/refunds;
+- Schedule 6 excise/fuel/environmental rebates/refunds;
+- Schedule 1 excise/levy parts;
+- Schedule 1 general notes and other note-only documents.
+
 Deliverables per family:
 
-- schema/type additions if the data shape differs;
+- schema/type additions when the data shape differs;
 - parser and QA report;
 - synthetic fixtures;
 - optional live smoke checks;
-- ruleset diff behavior.
+- candidate lookup helpers after parser shape is stable;
+- diff behavior for the family output.
 
 Skip:
 
 - amendment notices;
 - landed-cost calculations;
+- a combined all-schedules ruleset until Phase 12;
 - trying to normalize every customs concept into one premature abstraction.
 
 ## Phase 12 - Ruleset Version And Provenance Model
@@ -149,6 +164,7 @@ Scope:
 Deliverables:
 
 - manifest/schema changes;
+- combined all-schedules ruleset/container once Phase 11 family parsers exist;
 - deterministic ruleset IDs for multi-source builds;
 - validation for source trace coverage;
 - diff output that explains source-document changes clearly.

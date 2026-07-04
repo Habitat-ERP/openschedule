@@ -140,6 +140,7 @@ test("outputs schemas by group and schema name", async () => {
   assert.equal(all.exitCode, 0);
   assert.equal(all.json["tariff-line"].properties.schemaVersion.const, "za-customs.tariff-line.v1");
   assert.equal(all.json["schedule1-qa-report"].properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
+  assert.equal(all.json["schedule2-parse-result"].properties.schemaVersion.const, "za-customs.schedule2-parse-result.v1");
   assert.equal(one.json.properties.schemaVersion.const, "za-customs.tariff-line.v1");
   assert.equal(status.json.properties.schemaVersion.const, "za-sars.customs-source-status.v1");
 });
