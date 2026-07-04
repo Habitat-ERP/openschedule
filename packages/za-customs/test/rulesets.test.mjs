@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildCustomsRulesetContainer,
   buildCustomsRuleset,
+  calculateCustomsRulesetContainerId,
   calculateCustomsRulesetId,
   diffCustomsRulesets,
   findTariffLine,
   formatTariffLineBreadcrumb,
   formatTariffLineDisplayName,
   formatTariffLineLeafLabel,
-  validateCustomsRuleset
+  validateCustomsRuleset,
+  validateCustomsRulesetContainer
 } from "../dist/src/index.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
@@ -155,6 +158,35 @@ test("source provenance changes ruleset IDs without local cache noise", () => {
   assert.equal(localOnlyChange.manifest.rulesetId, built.manifest.rulesetId);
   assert.notEqual(provenanceChange.manifest.rulesetId, built.manifest.rulesetId);
   assert.ok(diffCustomsRulesets(built, provenanceChange).changes.some((change) => change.category === "source_metadata_changed"));
+});
+
+test("builds deterministic all-schedules containers and validates source traces", () => {
+  const built = ruleset([tariffLine()]);
+  const container = buildCustomsRulesetContainer({
+    manifest: { ...built.manifest, rulesetId: "ignored" },
+    schedule1Part1: parseResult(built.tariffLines)
+  });
+  const localOnlyChange = buildCustomsRulesetContainer({
+    manifest: {
+      ...built.manifest,
+      sourceDocuments: [{ ...sourceDocument, fileName: "local-copy.pdf", retrievedAt: "2026-07-05T00:00:00.000Z" }]
+    },
+    schedule1Part1: parseResult(built.tariffLines)
+  });
+  const parseChange = buildCustomsRulesetContainer({
+    manifest: built.manifest,
+    schedule1Part1: parseResult([{ ...built.tariffLines[0], description: "Changed goods" }])
+  });
+  const corrupted = structuredClone(container);
+  corrupted.schedule1Part1.tariffLines[0].sourceTrace = [];
+
+  assert.match(container.manifest.rulesetId, /^ZA_SARS_CUSTOMS_ALL_SCHEDULES_2026_05_29_[a-f0-9]{12}$/);
+  assert.equal(localOnlyChange.manifest.rulesetId, container.manifest.rulesetId);
+  assert.notEqual(parseChange.manifest.rulesetId, container.manifest.rulesetId);
+  assert.equal(calculateCustomsRulesetContainerId(container), container.manifest.rulesetId);
+  assert.equal(validateCustomsRulesetContainer(container).valid, true);
+  assert.equal(validateCustomsRulesetContainer(corrupted).valid, false);
+  assert.ok(validateCustomsRulesetContainer(corrupted).issues.some((issue) => issue.code === "source_trace_missing"));
 });
 
 test("derives consumer labels from the full hierarchy without storing them", () => {

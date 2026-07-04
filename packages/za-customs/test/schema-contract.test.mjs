@@ -9,6 +9,7 @@ import {
 } from "@openschedule/core";
 import {
   CustomsDutyEstimateV1Schema,
+  CustomsRulesetContainerV1Schema,
   CustomsRulesetV1Schema,
   Schedule1ExciseLeviesParseResultV1Schema,
   Schedule1ParseResultV1Schema,
@@ -29,6 +30,7 @@ test("schema versions are stable", () => {
   assert.equal(RulesetDiffV1Schema.properties.schemaVersion.const, "core.ruleset-diff.v1");
   assert.equal(ValidationReportV1Schema.properties.schemaVersion.const, "core.validation-report.v1");
   assert.equal(TariffLineV1Schema.properties.schemaVersion.const, "za-customs.tariff-line.v1");
+  assert.equal(CustomsRulesetContainerV1Schema.properties.schemaVersion.const, "za-customs.customs-ruleset-container.v1");
   assert.equal(CustomsRulesetV1Schema.properties.schemaVersion.const, "za-customs.customs-ruleset.v1");
   assert.equal(CustomsDutyEstimateV1Schema.properties.schemaVersion.const, "za-customs.duty-estimate.v1");
   assert.equal(Schedule1ParseResultV1Schema.properties.schemaVersion.const, "za-customs.schedule1-parse-result.v1");
@@ -74,4 +76,20 @@ test("customs ruleset contract keeps parser metrics", () => {
   assert.ok(Schedule6ParseResultV1Schema.properties.metrics.$ref);
   assert.ok(Schedule1QaReportV1Schema.required.includes("summary"));
   assert.ok(ScheduleFamilyQaReportV1Schema.required.includes("summary"));
+});
+
+test("customs ruleset container wraps existing family parse result schemas", () => {
+  assert.ok(CustomsRulesetContainerV1Schema.required.includes("schedule1Part1"));
+  assert.equal(
+    CustomsRulesetContainerV1Schema.properties.schedule1Part1.$ref,
+    "openschedule://schemas/za-customs/schedule1-parse-result.v1"
+  );
+  assert.equal(
+    CustomsRulesetContainerV1Schema.properties.schedule1ExciseLevies.$ref,
+    "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1"
+  );
+  assert.equal(
+    CustomsRulesetContainerV1Schema.properties.schedule6.$ref,
+    "openschedule://schemas/za-customs/schedule6-parse-result.v1"
+  );
 });

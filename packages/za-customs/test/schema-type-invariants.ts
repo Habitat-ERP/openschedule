@@ -1,9 +1,11 @@
 import type { RulesetManifestV1, SourceTraceV1 } from "@openschedule/core";
 import type {
   CustomsDutyEstimateV1,
+  CustomsRulesetContainerV1,
   CustomsRulesetV1,
   ScheduleFamilyQaReportV1,
   Schedule1ExciseLeviesParseResultV1,
+  Schedule1ParseResultV1,
   Schedule1QaReportV1,
   Schedule2ParseResultV1,
   Schedule3ParseResultV1,
@@ -93,6 +95,20 @@ const ruleset = {
   ],
   tariffLines: [tariffLine]
 } satisfies CustomsRulesetV1;
+
+const schedule1ParseResult = {
+  schemaVersion: "za-customs.schedule1-parse-result.v1",
+  tariffLines: [tariffLine],
+  warnings: [],
+  metrics: ruleset.parseMetrics,
+  pageMetrics: ruleset.pageMetrics
+} satisfies Schedule1ParseResultV1;
+
+const rulesetContainer = {
+  schemaVersion: "za-customs.customs-ruleset-container.v1",
+  manifest,
+  schedule1Part1: schedule1ParseResult
+} satisfies CustomsRulesetContainerV1;
 
 const estimate = {
   schemaVersion: "za-customs.duty-estimate.v1",
@@ -398,6 +414,7 @@ const schedule6ParseResult = {
 } satisfies Schedule6ParseResultV1;
 
 void estimate;
+void rulesetContainer;
 void qaReport;
 void scheduleFamilyQaReport;
 void schedule1ExciseLeviesParseResult;

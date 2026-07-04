@@ -64,6 +64,18 @@ export interface CustomsRulesetV1 {
   tariffLines: TariffLineV1[];
 }
 
+export interface CustomsRulesetContainerV1 {
+  schemaVersion: "za-customs.customs-ruleset-container.v1";
+  manifest: RulesetManifestV1;
+  schedule1Part1: Schedule1ParseResultV1;
+  schedule1ExciseLevies?: Schedule1ExciseLeviesParseResultV1;
+  schedule2?: Schedule2ParseResultV1;
+  schedule3?: Schedule3ParseResultV1;
+  schedule4?: Schedule4ParseResultV1;
+  schedule5?: Schedule5ParseResultV1;
+  schedule6?: Schedule6ParseResultV1;
+}
+
 export interface CustomsDutyEstimateV1 {
   schemaVersion: "za-customs.duty-estimate.v1";
   estimatedDuty: number | null;

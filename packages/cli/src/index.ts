@@ -30,6 +30,7 @@ import {
   listRateOptions,
   validateCustomsRuleset,
   CustomsDutyEstimateV1Schema,
+  CustomsRulesetContainerV1Schema,
   CustomsRulesetV1Schema,
   CUSTOMS_RATE_COLUMNS,
   Schedule1ParseResultV1Schema,
@@ -443,6 +444,7 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
     },
     "za-customs": {
       "duty-estimate": CustomsDutyEstimateV1Schema,
+      "customs-ruleset-container": CustomsRulesetContainerV1Schema,
       "customs-ruleset": CustomsRulesetV1Schema,
       "schedule1-parse-result": Schedule1ParseResultV1Schema,
       "schedule1-excise-levies-parse-result": Schedule1ExciseLeviesParseResultV1Schema,

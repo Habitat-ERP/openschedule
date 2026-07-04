@@ -11,7 +11,13 @@ import {
 import PackageJson from "../package.json" with { type: "json" };
 import { extractCustomsPdfTextItems } from "./pdf-text.js";
 import { parseSchedule1Part1TextPages } from "./schedule1-parser.js";
-import { CUSTOMS_RATE_COLUMNS, type CustomsRulesetV1, type Schedule1ParseResultV1, type TariffLineV1 } from "./types.js";
+import {
+  CUSTOMS_RATE_COLUMNS,
+  type CustomsRulesetContainerV1,
+  type CustomsRulesetV1,
+  type Schedule1ParseResultV1,
+  type TariffLineV1
+} from "./types.js";
 
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 
@@ -21,6 +27,10 @@ export interface BuildCustomsRulesetOptions {
   generatedAt?: string;
   effectiveDate?: string | null;
 }
+
+export type BuildCustomsRulesetContainerOptions = Omit<CustomsRulesetContainerV1, "schemaVersion" | "manifest"> & {
+  manifest: Omit<CustomsRulesetContainerV1["manifest"], "rulesetId"> & { rulesetId?: string };
+};
 
 export interface BuildCustomsRulesetFromPdfOptions {
   pdfPath: string;
@@ -94,6 +104,30 @@ export function buildCustomsRuleset(options: BuildCustomsRulesetOptions): Custom
   return ruleset;
 }
 
+export function buildCustomsRulesetContainer(options: BuildCustomsRulesetContainerOptions): CustomsRulesetContainerV1 {
+  const container: CustomsRulesetContainerV1 = {
+    schemaVersion: "za-customs.customs-ruleset-container.v1",
+    manifest: {
+      ...options.manifest,
+      rulesetId: "",
+      sourceDocuments: options.manifest.sourceDocuments.map((document) => structuredClone(document)).sort(compareSourceDocuments),
+      parser: { ...options.manifest.parser },
+      warnings: [...options.manifest.warnings]
+    },
+    schedule1Part1: structuredClone(options.schedule1Part1)
+  };
+
+  if (options.schedule1ExciseLevies) container.schedule1ExciseLevies = structuredClone(options.schedule1ExciseLevies);
+  if (options.schedule2) container.schedule2 = structuredClone(options.schedule2);
+  if (options.schedule3) container.schedule3 = structuredClone(options.schedule3);
+  if (options.schedule4) container.schedule4 = structuredClone(options.schedule4);
+  if (options.schedule5) container.schedule5 = structuredClone(options.schedule5);
+  if (options.schedule6) container.schedule6 = structuredClone(options.schedule6);
+
+  container.manifest.rulesetId = calculateCustomsRulesetContainerId(container);
+  return container;
+}
+
 export function calculateCustomsRulesetId(ruleset: CustomsRulesetV1): string {
   const effectiveDate = ruleset.manifest.effectiveDate ?? inferEffectiveDate(ruleset.tariffLines) ?? "unknown";
   const payload = {
@@ -110,6 +144,71 @@ export function calculateCustomsRulesetId(ruleset: CustomsRulesetV1): string {
   };
   const hash = createHash("sha256").update(stableStringify(payload)).digest("hex").slice(0, 12);
   return `ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1_${formatRulesetDate(effectiveDate)}_${hash}`;
+}
+
+export function calculateCustomsRulesetContainerId(container: CustomsRulesetContainerV1): string {
+  const effectiveDate = container.manifest.effectiveDate ?? "unknown";
+  const payload = {
+    domain: container.manifest.domain,
+    country: container.manifest.country,
+    publisher: container.manifest.publisher,
+    effectiveDate: container.manifest.effectiveDate ?? null,
+    sourceDocuments: container.manifest.sourceDocuments
+      .map(sourceDocumentIdentity)
+      .sort((left, right) => stableStringify(left).localeCompare(stableStringify(right))),
+    parser: container.manifest.parser,
+    schedule1Part1: container.schedule1Part1,
+    schedule1ExciseLevies: container.schedule1ExciseLevies,
+    schedule2: container.schedule2,
+    schedule3: container.schedule3,
+    schedule4: container.schedule4,
+    schedule5: container.schedule5,
+    schedule6: container.schedule6
+  };
+  const hash = createHash("sha256").update(stableStringify(payload)).digest("hex").slice(0, 12);
+  return `ZA_SARS_CUSTOMS_ALL_SCHEDULES_${formatRulesetDate(effectiveDate)}_${hash}`;
+}
+
+export function validateCustomsRulesetContainer(container: CustomsRulesetContainerV1): ValidationReportV1 {
+  const issues: ValidationIssueV1[] = [];
+  const sourceHashes = new Set(container.manifest.sourceDocuments.map((document) => document.sha256));
+
+  if (container.schemaVersion !== "za-customs.customs-ruleset-container.v1") {
+    addIssue(issues, "schema_version", "Ruleset container schemaVersion is invalid.", "/schemaVersion");
+  }
+  if (container.manifest.schemaVersion !== "core.ruleset-manifest.v1") {
+    addIssue(issues, "manifest_schema_version", "Manifest schemaVersion is invalid.", "/manifest/schemaVersion");
+  }
+  if (!container.manifest.sourceDocuments.length) {
+    addIssue(issues, "source_documents_missing", "Ruleset container must include at least one source document.", "/manifest/sourceDocuments");
+  }
+  container.manifest.sourceDocuments.forEach((document, index) => {
+    if (!SHA256_PATTERN.test(document.sha256)) {
+      addIssue(issues, "source_document_hash", "Source document sha256 must be a lowercase SHA-256 hex digest.", `/manifest/sourceDocuments/${index}/sha256`);
+    }
+  });
+  if (!container.schedule1Part1) {
+    addIssue(issues, "schedule1_part1_missing", "schedule1Part1 is required.", "/schedule1Part1");
+  }
+
+  validateNestedSourceTraces(issues, container.schedule1Part1, sourceHashes, "/schedule1Part1");
+  validateNestedSourceTraces(issues, container.schedule1ExciseLevies, sourceHashes, "/schedule1ExciseLevies");
+  validateNestedSourceTraces(issues, container.schedule2, sourceHashes, "/schedule2");
+  validateNestedSourceTraces(issues, container.schedule3, sourceHashes, "/schedule3");
+  validateNestedSourceTraces(issues, container.schedule4, sourceHashes, "/schedule4");
+  validateNestedSourceTraces(issues, container.schedule5, sourceHashes, "/schedule5");
+  validateNestedSourceTraces(issues, container.schedule6, sourceHashes, "/schedule6");
+
+  const expectedRulesetId = calculateCustomsRulesetContainerId(container);
+  if (container.manifest.rulesetId !== expectedRulesetId) {
+    addIssue(issues, "ruleset_id_mismatch", `rulesetId must be ${expectedRulesetId}.`, "/manifest/rulesetId");
+  }
+
+  return {
+    schemaVersion: "core.validation-report.v1",
+    valid: issues.every((issue) => issue.severity !== "error"),
+    issues
+  };
 }
 
 export function validateCustomsRuleset(ruleset: CustomsRulesetV1): ValidationReportV1 {
@@ -335,6 +434,32 @@ function validateSourceTraces(
       addIssue(issues, "source_trace_unknown_document", "sourceTrace must reference a ruleset source document.", `${path}/${index}/sourceDocumentSha256`);
     }
   });
+}
+
+function validateNestedSourceTraces(
+  issues: ValidationIssueV1[],
+  value: unknown,
+  sourceHashes: ReadonlySet<string>,
+  path: string
+): void {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach((child, index) => validateNestedSourceTraces(issues, child, sourceHashes, `${path}/${index}`));
+    return;
+  }
+
+  Object.entries(value as Record<string, unknown>).forEach(([key, child]) => {
+    const childPath = `${path}/${escapeJsonPointer(key)}`;
+    if (key === "sourceTrace") {
+      validateSourceTraces(issues, child as readonly SourceTraceV1[] | undefined, sourceHashes, childPath);
+      return;
+    }
+    validateNestedSourceTraces(issues, child, sourceHashes, childPath);
+  });
+}
+
+function escapeJsonPointer(value: string): string {
+  return value.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 function byNormalizedCode(lines: readonly TariffLineV1[]): Map<string, TariffLineV1> {

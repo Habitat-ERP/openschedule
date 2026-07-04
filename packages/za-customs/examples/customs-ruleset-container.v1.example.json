@@ -1,0 +1,393 @@
+{
+  "schemaVersion": "za-customs.customs-ruleset-container.v1",
+  "manifest": {
+    "schemaVersion": "core.ruleset-manifest.v1",
+    "rulesetId": "ZA_SARS_CUSTOMS_ALL_SCHEDULES_2026_07_04_95d11ef1b6a6",
+    "domain": "za-customs",
+    "country": "ZA",
+    "publisher": "SARS",
+    "generatedAt": "2026-07-04T00:00:00.000Z",
+    "effectiveDate": "2026-07-04",
+    "sourceDocuments": [
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "fileName": "schedule-1-part-1.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-05-29",
+        "effectiveDate": "2026-05-29"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "fileName": "schedule-1-excise-levies.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_1_EXCISE_LEVIES",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-04-30",
+        "effectiveDate": "2026-04-30"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "fileName": "schedule-2.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_2",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-06-12",
+        "effectiveDate": "2026-06-12"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "fileName": "schedule-3.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_3",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-01-25",
+        "effectiveDate": "2026-01-25"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "fileName": "schedule-4.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_4",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-06-12",
+        "effectiveDate": "2026-06-12"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "fileName": "schedule-5.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_5",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-01-01",
+        "effectiveDate": "2026-01-01"
+      },
+      {
+        "schemaVersion": "core.source-document-metadata.v1",
+        "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+        "fileName": "schedule-6.pdf",
+        "sourceIdentifier": "ZA_SARS_CUSTOMS_SCHEDULE_6",
+        "sourceRole": "consolidated-schedule",
+        "publishedDate": "2026-07-01",
+        "effectiveDate": "2026-07-01"
+      }
+    ],
+    "parser": {
+      "packageName": "@openschedule/za-customs",
+      "packageVersion": "0.0.0"
+    },
+    "warnings": []
+  },
+  "schedule1Part1": {
+    "schemaVersion": "za-customs.schedule1-parse-result.v1",
+    "tariffLines": [
+      {
+        "schemaVersion": "za-customs.tariff-line.v1",
+        "tariffCode": "0000.00.00",
+        "normalizedTariffCode": "00000000",
+        "description": "Synthetic customs goods",
+        "normalizedDescription": "Synthetic customs goods",
+        "rates": {
+          "general": {
+            "raw": "free",
+            "kind": "free",
+            "components": [],
+            "warnings": []
+          }
+        },
+        "validFrom": "2026-05-29",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "0000.00.00 Synthetic customs goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "tariffLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule1ExciseLevies": {
+    "schemaVersion": "za-customs.schedule1-excise-levies-parse-result.v1",
+    "exciseLevyLines": [
+      {
+        "schemaVersion": "za-customs.schedule1-excise-levy-line.v1",
+        "part": "2A",
+        "item": "104.10.10",
+        "normalizedItem": "1041010",
+        "tariffSubheading": "2203.00.05",
+        "normalizedTariffSubheading": "22030005",
+        "description": "Synthetic excise goods",
+        "normalizedDescription": "Synthetic excise goods",
+        "rate": {
+          "raw": "7,82c/li",
+          "kind": "specific",
+          "components": [
+            {
+              "amount": 7.82,
+              "currency": "ZAc",
+              "perQuantity": 1,
+              "unit": "li"
+            }
+          ],
+          "warnings": []
+        },
+        "validFrom": "2026-04-30",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "104.10.10 Synthetic excise goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "exciseLevyLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule2": {
+    "schemaVersion": "za-customs.schedule2-parse-result.v1",
+    "tradeRemedyLines": [
+      {
+        "schemaVersion": "za-customs.schedule2-trade-remedy-line.v1",
+        "item": "201.02",
+        "normalizedItem": "20102",
+        "tariffHeading": "0207.14.9",
+        "normalizedTariffHeading": "0207149",
+        "code": "03.07",
+        "normalizedCode": "0307",
+        "checkDigit": "70",
+        "description": "Synthetic trade remedy goods",
+        "normalizedDescription": "Synthetic trade remedy goods",
+        "rebateItems": [
+          "301.00-399.00"
+        ],
+        "originatingCountryOrTerritory": "Germany",
+        "rate": {
+          "raw": "73,33%",
+          "kind": "ad_valorem",
+          "components": [
+            {
+              "basis": "customs_value",
+              "rate": 0.7333
+            }
+          ],
+          "warnings": []
+        },
+        "validFrom": "2026-06-12",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "201.02 Synthetic trade remedy goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "tradeRemedyLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule3": {
+    "schemaVersion": "za-customs.schedule3-parse-result.v1",
+    "rebateLines": [
+      {
+        "schemaVersion": "za-customs.schedule3-industrial-rebate-line.v1",
+        "part": "1",
+        "rebateItem": "303.01",
+        "normalizedRebateItem": "30301",
+        "tariffHeading": "1511.90",
+        "normalizedTariffHeading": "151190",
+        "rebateCode": "01.06",
+        "normalizedRebateCode": "0106",
+        "checkDigit": "62",
+        "description": "Synthetic industrial rebate goods",
+        "normalizedDescription": "Synthetic industrial rebate goods",
+        "extentOfRebate": "Full duty",
+        "validFrom": "2026-01-25",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "303.01 Synthetic industrial rebate goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "rebateLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule4": {
+    "schemaVersion": "za-customs.schedule4-parse-result.v1",
+    "rebateLines": [
+      {
+        "schemaVersion": "za-customs.schedule4-rebate-line.v1",
+        "part": "2",
+        "rebateItem": "460.01",
+        "normalizedRebateItem": "46001",
+        "tariffHeading": "03.02",
+        "normalizedTariffHeading": "0302",
+        "rebateCode": "01.04",
+        "normalizedRebateCode": "0104",
+        "checkDigit": "49",
+        "description": "Synthetic Schedule 4 rebate goods",
+        "normalizedDescription": "Synthetic Schedule 4 rebate goods",
+        "extentOfRebate": "Full duty",
+        "validFrom": "2026-06-12",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "460.01 Synthetic Schedule 4 rebate goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "rebateLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule5": {
+    "schemaVersion": "za-customs.schedule5-parse-result.v1",
+    "drawbackRefundLines": [
+      {
+        "schemaVersion": "za-customs.schedule5-drawback-refund-line.v1",
+        "part": "1",
+        "item": "501.02",
+        "normalizedItem": "50102",
+        "tariffHeading": "03.05",
+        "normalizedTariffHeading": "0305",
+        "code": "01.04",
+        "normalizedCode": "0104",
+        "checkDigit": "43",
+        "description": "Synthetic Schedule 5 drawback goods",
+        "normalizedDescription": "Synthetic Schedule 5 drawback goods",
+        "extentOfRefundOrDrawback": "Full duty",
+        "validFrom": "2026-01-01",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "501.02 Synthetic Schedule 5 drawback goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "drawbackRefundLines": 1,
+      "rejectedRows": 0
+    }
+  },
+  "schedule6": {
+    "schemaVersion": "za-customs.schedule6-parse-result.v1",
+    "exciseRebateRefundLines": [
+      {
+        "schemaVersion": "za-customs.schedule6-excise-rebate-refund-line.v1",
+        "part": "1B",
+        "item": "619.01",
+        "normalizedItem": "61901",
+        "tariffItem": "104.10.10",
+        "normalizedTariffItem": "1041010",
+        "rebateCode": "01.01",
+        "normalizedRebateCode": "0101",
+        "checkDigit": "76",
+        "description": "Synthetic Schedule 6 excise goods",
+        "normalizedDescription": "Synthetic Schedule 6 excise goods",
+        "extentOfRebate": "Full duty",
+        "extentOfRefund": "",
+        "validFrom": "2026-07-01",
+        "sourceTrace": [
+          {
+            "schemaVersion": "core.source-trace.v1",
+            "sourceDocumentSha256": "6666666666666666666666666666666666666666666666666666666666666666",
+            "page": 1,
+            "locator": "synthetic fixture",
+            "text": "619.01 Synthetic Schedule 6 excise goods"
+          }
+        ],
+        "parseConfidence": 1,
+        "warnings": []
+      }
+    ],
+    "warnings": [],
+    "metrics": {
+      "pagesParsed": 1,
+      "textItems": 1,
+      "layoutRows": 1,
+      "candidateRows": 1,
+      "contextRows": 0,
+      "exciseRebateRefundLines": 1,
+      "rejectedRows": 0
+    }
+  }
+}

@@ -23,6 +23,7 @@ import {
 import {
   CUSTOMS_RATE_COLUMNS,
   CustomsDutyEstimateV1Schema,
+  CustomsRulesetContainerV1Schema,
   CustomsRulesetV1Schema,
   Schedule1ParseResultV1Schema,
   Schedule1ExciseLeviesParseResultV1Schema,
@@ -71,6 +72,7 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/za-sars/customs-source-status.v1": CustomsSourceStatusV1Schema,
   "openschedule://schemas/za-sars/fetched-customs-source.v1": FetchedCustomsSourceV1Schema,
   "openschedule://schemas/za-customs/duty-estimate.v1": CustomsDutyEstimateV1Schema,
+  "openschedule://schemas/za-customs/customs-ruleset-container.v1": CustomsRulesetContainerV1Schema,
   "openschedule://schemas/za-customs/customs-ruleset.v1": CustomsRulesetV1Schema,
   "openschedule://schemas/za-customs/schedule1-parse-result.v1": Schedule1ParseResultV1Schema,
   "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1": Schedule1ExciseLeviesParseResultV1Schema,

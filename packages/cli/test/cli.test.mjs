@@ -139,6 +139,7 @@ test("outputs schemas by group and schema name", async () => {
 
   assert.equal(all.exitCode, 0);
   assert.equal(all.json["tariff-line"].properties.schemaVersion.const, "za-customs.tariff-line.v1");
+  assert.equal(all.json["customs-ruleset-container"].properties.schemaVersion.const, "za-customs.customs-ruleset-container.v1");
   assert.equal(all.json["schedule1-qa-report"].properties.schemaVersion.const, "za-customs.schedule1-qa-report.v1");
   assert.equal(all.json["schedule-family-qa-report"].properties.schemaVersion.const, "za-customs.schedule-family-qa-report.v1");
   assert.equal(

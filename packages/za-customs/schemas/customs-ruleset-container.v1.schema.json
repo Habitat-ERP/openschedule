@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "openschedule://schemas/za-customs/customs-ruleset-container.v1",
+  "title": "Customs Ruleset Container V1",
+  "description": "A versioned South African customs ruleset container that preserves family-specific parser outputs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifest",
+    "schedule1Part1"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "za-customs.customs-ruleset-container.v1"
+    },
+    "manifest": {
+      "$ref": "openschedule://schemas/core/ruleset-manifest.v1"
+    },
+    "schedule1Part1": {
+      "$ref": "openschedule://schemas/za-customs/schedule1-parse-result.v1"
+    },
+    "schedule1ExciseLevies": {
+      "$ref": "openschedule://schemas/za-customs/schedule1-excise-levies-parse-result.v1"
+    },
+    "schedule2": {
+      "$ref": "openschedule://schemas/za-customs/schedule2-parse-result.v1"
+    },
+    "schedule3": {
+      "$ref": "openschedule://schemas/za-customs/schedule3-parse-result.v1"
+    },
+    "schedule4": {
+      "$ref": "openschedule://schemas/za-customs/schedule4-parse-result.v1"
+    },
+    "schedule5": {
+      "$ref": "openschedule://schemas/za-customs/schedule5-parse-result.v1"
+    },
+    "schedule6": {
+      "$ref": "openschedule://schemas/za-customs/schedule6-parse-result.v1"
+    }
+  }
+}
