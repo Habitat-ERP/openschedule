@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.habitat-erp/openschedule",
+  "title": "OpenSchedule",
+  "description": "MCP server for local OpenSchedule ZA customs tools: sync, tariff lookup, source trace, schemas, and mechanical duty estimates.",
+  "repository": {
+    "url": "https://github.com/Habitat-ERP/openschedule",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@openschedule/mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

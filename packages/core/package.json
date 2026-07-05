@@ -1,15 +1,15 @@
 {
   "name": "@openschedule/core",
   "version": "0.1.0",
-  "description": "Core schemas and utilities for OpenSchedule statutory rulesets.",
+  "description": "Deterministic TypeScript types, JSON Schemas, source traces, validation reports, and diff contracts for OpenSchedule statutory rulesets.",
   "keywords": [
     "openschedule",
-    "ruleset",
-    "schema",
-    "statutory-data",
-    "provenance",
-    "validation",
-    "source-trace"
+    "statutory ruleset schema",
+    "auditable statutory data",
+    "source trace metadata",
+    "ruleset validation report",
+    "deterministic json schema",
+    "typescript legal data contracts"
   ],
   "license": "Apache-2.0",
   "type": "module",

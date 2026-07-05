@@ -1,16 +1,16 @@
 {
   "name": "@openschedule/za-customs",
   "version": "0.1.0",
-  "description": "South African customs duty lookups and estimates from locally parsed SARS schedules.",
+  "description": "Local-cache TypeScript API for South African SARS customs schedule lookup, source trace, and mechanical duty estimates.",
   "keywords": [
-    "south-africa",
-    "customs",
-    "sars",
-    "tariff",
-    "hs-code",
-    "customs-duty",
-    "ruleset",
-    "provenance"
+    "south african customs tariff lookup",
+    "sars customs schedules",
+    "south africa import duty estimate",
+    "mechanical customs duty estimate",
+    "hs tariff rate lookup",
+    "local customs ruleset cache",
+    "customs source provenance",
+    "rebates drawbacks refunds"
   ],
   "license": "Apache-2.0",
   "type": "module",

@@ -1,16 +1,17 @@
 {
   "name": "@openschedule/mcp",
   "version": "0.1.0",
-  "description": "MCP server for OpenSchedule statutory ruleset tools.",
+  "mcpName": "io.github.habitat-erp/openschedule",
+  "description": "MCP server exposing OpenSchedule ZA customs lookup, source trace, schemas, and mechanical duty estimate tools.",
   "keywords": [
-    "openschedule",
-    "mcp",
-    "south-africa",
-    "customs",
-    "sars",
-    "tariff",
-    "hs-code",
-    "ruleset"
+    "openschedule mcp",
+    "mcp server customs tariff",
+    "model context protocol customs",
+    "ai agent customs tools",
+    "south africa sars customs mcp",
+    "za customs mcp server",
+    "tariff lookup mcp tool",
+    "customs source trace tool"
   ],
   "license": "Apache-2.0",
   "type": "module",
@@ -35,7 +36,8 @@
   "types": "./dist/src/index.d.ts",
   "files": [
     "dist",
-    "!dist/tsconfig.tsbuildinfo"
+    "!dist/tsconfig.tsbuildinfo",
+    "server.json"
   ],
   "scripts": {
     "build": "tsc -b",

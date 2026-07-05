@@ -8,36 +8,39 @@ Every result can include source references back to the SARS PDFs, so teams can a
 
 ## ZA Customs
 
-`@openschedule/za-customs` builds and reads a managed local cache of SARS customs source documents and derived rulesets. It gives you:
+`@openschedule/za-customs` is the package for South African customs duty work.
 
-- tariff-line lookup and available rate columns
-- mechanically resolvable duty estimates
-- source trace and source document references
-- duties, trade remedies, rebates, drawbacks, and refunds across customs schedules
-- light default responses, with parser/source metadata available only when requested
+It helps your app:
 
-OpenSchedule does not publish or bundle SARS PDFs, SARS datasets, or shared generated customs rulesets. Consumers fetch supported official SARS sources into their own local cache, then build an auditable `za-customs.json` ruleset locally.
+- download supported SARS customs schedule PDFs into your own cache
+- build a local `za-customs.json` file from those PDFs
+- look up tariff codes, descriptions, and available rate columns
+- estimate duties when the rate text is clear enough to calculate
+- list duties, trade remedies, rebates, drawbacks, and refunds
+- show the SARS PDF page and file hash behind a result when you ask for audit details
 
-Why this shape:
+OpenSchedule does not ship SARS PDFs, SARS datasets, or a prebuilt customs database. Each user fetches SARS sources into their own environment and builds their own local data file.
 
-- **Local runtime path:** after sync, lookups and mechanical estimates read the local `za-customs.json` ruleset instead of querying a hosted tariff API.
-- **Auditable outputs:** `includeMetadata: true` and `source()` expose parser confidence, warnings, source trace, page locators, and source document SHA-256 hashes.
-- **Typed contracts:** TypeScript types and JSON schemas cover tariff lines, rate components, duty estimates, source metadata, validation reports, and ruleset containers.
-- **Verification fixtures:** `npm test` includes 50 synthetic mechanical duty fixtures covering ad valorem, specific, compound, preferential/free, and unresolved fallback cases without republishing SARS tariff data.
-- **Parser completeness gates:** ruleset validation surfaces low parsed-line counts, parser warnings, and metric mismatches so incomplete source parses are visible before production use.
+Why it works this way:
+
+- **Runs locally after sync:** once `za-customs.json` exists, lookups and estimates do not need internet access or a hosted tariff API.
+- **Easy to audit:** `includeMetadata: true` and `source()` show parser warnings, SARS PDF page references, and document hashes.
+- **Typed for app developers:** TypeScript types and JSON schemas describe tariff lines, rates, estimates, source references, validation results, and the local data file.
+- **Tested without copying SARS data:** `npm test` includes 50 synthetic duty examples covering ad valorem, specific, compound, preferential/free, and unresolved fallback cases.
+- **Flags incomplete parses:** validation warns when a parse produced too few lines, reported parser warnings, or has mismatched counts.
 
 ```mermaid
 flowchart LR
-  sars["Official SARS schedule sources"] --> sync["Consumer syncs supported sources"]
-  sync --> cache["Consumer-owned local cache<br/>PDFs + source metadata"]
-  cache --> build["OpenSchedule parser builds<br/>za-customs.json"]
-  build --> runtime["Runtime lookups and estimates<br/>read local ruleset"]
-  runtime --> output["Light JSON by default"]
-  runtime --> audit["Optional metadata<br/>sourceTrace + SHA-256 + warnings"]
+  sars["Official SARS schedule PDFs"] --> sync["Your app downloads supported sources"]
+  sync --> cache["Your local cache<br/>PDFs + download metadata"]
+  cache --> build["OpenSchedule builds<br/>za-customs.json"]
+  build --> runtime["Your app reads<br/>local JSON"]
+  runtime --> output["Lookup and estimate results"]
+  runtime --> audit["Optional audit details<br/>PDF page + SHA-256 + warnings"]
 
-  cache -. "No shared SARS data distribution" .-> build
-  runtime -. "No hosted API dependency after sync" .-> output
-  audit -. "Verify against official source trail" .-> output
+  cache -. "OpenSchedule does not publish SARS PDFs or datasets" .-> build
+  runtime -. "No hosted API needed after sync" .-> output
+  audit -. "Check result against SARS source" .-> output
 ```
 
 Examples below use synthetic tariff codes and values so the README does not copy official SARS tariff content.
@@ -189,6 +192,10 @@ These tools use the same parameters as the TypeScript API: `cacheDir`, `sync`, `
 Responses are light by default. Parser confidence, warnings, source trace, and source document metadata are omitted unless you pass `includeMetadata: true` or `--include-metadata`.
 
 Use `source(tariffCode)`, `openschedule customs source`, or `za_customs_source` when you specifically need provenance.
+
+## Examples
+
+Copyable examples live in `examples/`. Run `node examples/za-customs-estimate.mjs` after `npm install` and `npm run build`; it uses synthetic data and shows both a successful mechanical estimate and an `estimatedDuty: null` fallback.
 
 ## Sources And Cache
 

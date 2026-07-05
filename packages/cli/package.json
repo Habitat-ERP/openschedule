@@ -1,16 +1,16 @@
 {
   "name": "@openschedule/cli",
   "version": "0.1.0",
-  "description": "Command-line tools for OpenSchedule statutory rulesets.",
+  "description": "CLI for OpenSchedule ZA customs sync, tariff lookup, source trace, and mechanical duty estimates.",
   "keywords": [
-    "openschedule",
-    "south-africa",
-    "customs",
-    "sars",
-    "tariff",
-    "hs-code",
-    "customs-duty",
-    "cli"
+    "openschedule cli",
+    "south african customs cli",
+    "sars customs schedule cli",
+    "za customs sync command",
+    "tariff lookup command line",
+    "mechanical duty estimate cli",
+    "customs source trace cli",
+    "local customs cache cli"
   ],
   "license": "Apache-2.0",
   "type": "module",
