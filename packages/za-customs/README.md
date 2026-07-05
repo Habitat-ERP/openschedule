@@ -27,6 +27,8 @@ Why this shape:
 - **Local runtime path:** after sync, lookups and mechanical estimates read the local `za-customs.json` ruleset instead of querying a hosted tariff API.
 - **Auditable outputs:** `includeMetadata: true` and `source()` expose parser confidence, warnings, source trace, page locators, and source document SHA-256 hashes.
 - **Typed contracts:** TypeScript types and JSON schemas cover tariff lines, rate components, duty estimates, source metadata, validation reports, and ruleset containers.
+- **Verification fixtures:** `npm test` includes 50 synthetic mechanical duty fixtures covering ad valorem, specific, compound, preferential/free, and unresolved fallback cases without republishing SARS tariff data.
+- **Parser completeness gates:** ruleset validation surfaces low parsed-line counts, parser warnings, and metric mismatches so incomplete source parses are visible before production use.
 
 ```mermaid
 flowchart LR

@@ -191,6 +191,70 @@ export function validateCustomsRulesetContainer(container: CustomsRulesetContain
     addIssue(issues, "schedule1_part1_missing", "schedule1Part1 is required.", "/schedule1Part1");
   }
 
+  validateParseCompleteness(
+    issues,
+    "/schedule1Part1",
+    "Schedule 1 Part 1 tariff lines",
+    container.schedule1Part1?.tariffLines.length,
+    container.schedule1Part1?.metrics.tariffLines,
+    100,
+    container.schedule1Part1?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule1ExciseLevies",
+    "Schedule 1 excise and levy lines",
+    container.schedule1ExciseLevies?.exciseLevyLines.length,
+    container.schedule1ExciseLevies?.metrics.exciseLevyLines,
+    1,
+    container.schedule1ExciseLevies?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule2",
+    "Schedule 2 trade remedy lines",
+    container.schedule2?.tradeRemedyLines.length,
+    container.schedule2?.metrics.tradeRemedyLines,
+    1,
+    container.schedule2?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule3",
+    "Schedule 3 rebate lines",
+    container.schedule3?.rebateLines.length,
+    container.schedule3?.metrics.rebateLines,
+    1,
+    container.schedule3?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule4",
+    "Schedule 4 rebate lines",
+    container.schedule4?.rebateLines.length,
+    container.schedule4?.metrics.rebateLines,
+    1,
+    container.schedule4?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule5",
+    "Schedule 5 drawback/refund lines",
+    container.schedule5?.drawbackRefundLines.length,
+    container.schedule5?.metrics.drawbackRefundLines,
+    1,
+    container.schedule5?.warnings.length
+  );
+  validateParseCompleteness(
+    issues,
+    "/schedule6",
+    "Schedule 6 rebate/refund lines",
+    container.schedule6?.exciseRebateRefundLines.length,
+    container.schedule6?.metrics.exciseRebateRefundLines,
+    1,
+    container.schedule6?.warnings.length
+  );
+
   validateNestedSourceTraces(issues, container.schedule1Part1, sourceHashes, "/schedule1Part1");
   validateNestedSourceTraces(issues, container.schedule1ExciseLevies, sourceHashes, "/schedule1ExciseLevies");
   validateNestedSourceTraces(issues, container.schedule2, sourceHashes, "/schedule2");
@@ -239,6 +303,15 @@ export function validateCustomsRuleset(ruleset: CustomsRulesetV1): ValidationRep
       "/parseMetrics/tariffLines"
     );
   }
+  validateParseCompleteness(
+    issues,
+    "",
+    "Schedule 1 Part 1 tariff lines",
+    ruleset.tariffLines.length,
+    ruleset.parseMetrics.tariffLines,
+    100,
+    ruleset.manifest.warnings.length
+  );
 
   const seenCodes = new Set<string>();
   for (const [index, line] of ruleset.tariffLines.entries()) {
@@ -417,6 +490,37 @@ function addIssue(issues: ValidationIssueV1[], code: string, message: string, pa
     message,
     path
   });
+}
+
+function addWarning(issues: ValidationIssueV1[], code: string, message: string, path: string): void {
+  issues.push({
+    schemaVersion: "core.validation-issue.v1",
+    severity: "warning",
+    code,
+    message,
+    path
+  });
+}
+
+function validateParseCompleteness(
+  issues: ValidationIssueV1[],
+  path: string,
+  label: string,
+  actualLines: number | undefined,
+  metricLines: number | undefined,
+  minimumLines: number,
+  warningCount: number | undefined
+): void {
+  if (actualLines === undefined || metricLines === undefined) return;
+  if (actualLines !== metricLines) {
+    addIssue(issues, "parse_metrics_mismatch", `${label} metric must equal parsed line count.`, `${path}/metrics`);
+  }
+  if (actualLines < minimumLines) {
+    addWarning(issues, "parse_line_count_low", `${label} parsed ${actualLines} line(s); expected at least ${minimumLines} for a production completeness check.`, path || "/");
+  }
+  if ((warningCount ?? 0) > 0) {
+    addWarning(issues, "parse_warnings_present", `${label} parser emitted ${warningCount} warning(s); review before relying on this ruleset.`, `${path || ""}/warnings`);
+  }
 }
 
 function validateSourceTraces(

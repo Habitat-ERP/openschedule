@@ -189,6 +189,18 @@ test("builds deterministic all-schedules containers and validates source traces"
   assert.ok(validateCustomsRulesetContainer(corrupted).issues.some((issue) => issue.code === "source_trace_missing"));
 });
 
+test("validation reports parser completeness warnings without blocking fixtures", () => {
+  const built = ruleset([tariffLine()]);
+  const container = buildCustomsRulesetContainer({
+    manifest: built.manifest,
+    schedule1Part1: parseResult(built.tariffLines)
+  });
+  const report = validateCustomsRulesetContainer(container);
+
+  assert.equal(report.valid, true);
+  assert.ok(report.issues.some((issue) => issue.severity === "warning" && issue.code === "parse_line_count_low"));
+});
+
 test("derives consumer labels from the full hierarchy without storing them", () => {
   const line = tariffLine();
 
