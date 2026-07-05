@@ -1,8 +1,8 @@
 # @openschedule/za-customs
 
-Consumer API and ruleset tooling for South African customs schedules.
+South African customs duty lookups and estimates for TypeScript apps.
 
-`@openschedule/za-customs` fetches supported official SARS customs schedule PDFs into the consumer's local cache, builds a local `za-customs.json` ruleset, and exposes tariff lookup, rate options, mechanical duty estimates, source trace, duties, trade remedies, rebates, drawbacks, and refunds.
+`@openschedule/za-customs` downloads official SARS customs schedule PDFs into your cache, converts them into a local `za-customs.json` file, and exposes tariff lookup, rate options, mechanical duty estimates, source references, duties, trade remedies, rebates, drawbacks, and refunds.
 
 ```bash
 npm install @openschedule/za-customs

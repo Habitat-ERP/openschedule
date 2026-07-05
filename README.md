@@ -1,8 +1,10 @@
 # OpenSchedule
 
-OpenSchedule turns official statutory source documents into local, versioned, auditable rulesets. It is infrastructure for developers who need repeatable statutory data without depending on a hosted API, hidden parser state, or bundled third-party data.
+OpenSchedule is a TypeScript toolkit for using South African customs tariff data in software.
 
-The current consumer surface is South African customs from official SARS customs schedule sources.
+It downloads official SARS customs schedule PDFs into your own cache, converts them into a local JSON file, and lets your app look up tariff lines, rates, and duty estimates without calling a hosted API.
+
+Every result can include source references back to the SARS PDFs, so teams can audit what the calculation used.
 
 ## ZA Customs
 

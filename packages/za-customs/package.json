@@ -1,7 +1,7 @@
 {
   "name": "@openschedule/za-customs",
   "version": "0.1.0",
-  "description": "Consumer API and ruleset tooling for South African customs schedules.",
+  "description": "South African customs duty lookups and estimates from locally parsed SARS schedules.",
   "keywords": [
     "south-africa",
     "customs",
