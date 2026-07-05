@@ -326,6 +326,7 @@ async function runDiff(args: string[]): Promise<unknown> {
 
 async function runLookup(args: string[]): Promise<unknown> {
   const { values, positionals } = parseOptions(args, {
+    ...metadataOptions(),
     "tariff-code": { type: "string" }
   });
   if (positionals.length !== 1) throw new UsageError("lookup requires <ruleset.json>.");
@@ -338,6 +339,7 @@ async function runLookup(args: string[]): Promise<unknown> {
 
 async function runRates(args: string[]): Promise<unknown> {
   const { values, positionals } = parseOptions(args, {
+    ...metadataOptions(),
     "tariff-code": { type: "string" }
   });
   if (positionals.length !== 1) throw new UsageError("rates requires <ruleset.json>.");
@@ -351,6 +353,7 @@ async function runRates(args: string[]): Promise<unknown> {
 
 async function runEstimate(args: string[]): Promise<ReturnType<typeof estimateCustomsDuty>> {
   const { values, positionals } = parseOptions(args, {
+    ...metadataOptions(),
     "tariff-code": { type: "string" },
     "effective-date": { type: "string" },
     "customs-value": { type: "string" },
@@ -715,9 +718,9 @@ Legacy/internal:
   openschedule status za-sars customs --cache <dir>
   openschedule build za-customs --sources <dir|pdf> --out <file> [--effective-date YYYY-MM-DD] [--pages 1,2]
   openschedule diff <old-ruleset.json> <new-ruleset.json>
-  openschedule lookup <ruleset.json> --tariff-code <code>
-  openschedule rates <ruleset.json> --tariff-code <code>
-  openschedule estimate <ruleset.json> --tariff-code <code> --effective-date YYYY-MM-DD [--customs-value n] [--quantity n --quantity-unit unit] [--rate-column ${CUSTOMS_RATE_COLUMNS.join("|")}]
+  openschedule lookup <ruleset.json> --tariff-code <code> [--include-metadata]
+  openschedule rates <ruleset.json> --tariff-code <code> [--include-metadata]
+  openschedule estimate <ruleset.json> --tariff-code <code> --effective-date YYYY-MM-DD [--customs-value n] [--quantity n --quantity-unit unit] [--rate-column ${CUSTOMS_RATE_COLUMNS.join("|")}] [--include-metadata]
   openschedule qa inspect <ruleset-or-parse-result.json> --tariff-code <code> [--tariff-code <code>]
   openschedule qa report <ruleset-or-parse-result.json> [--low-confidence n] [--high-rejection-page n]
   openschedule schemas <core|za-sars|za-customs> [schema-name]

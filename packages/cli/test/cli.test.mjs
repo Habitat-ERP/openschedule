@@ -208,11 +208,17 @@ test("looks up tariff lines and lists available rates", async () => {
   await withTempDir(async (dir) => {
     const path = await writeRuleset(dir, "ruleset.json", ruleset([tariffLine()]));
     const lookup = await invoke(["lookup", path, "--tariff-code", "000110"]);
+    const richLookup = await invoke(["lookup", path, "--tariff-code", "000110", "--include-metadata"]);
     const rates = await invoke(["rates", path, "--tariff-code", "0001.10"]);
+    const richRates = await invoke(["rates", path, "--tariff-code", "0001.10", "--include-metadata"]);
 
     assert.equal(lookup.exitCode, 0);
     assert.equal(lookup.json.tariffCode, "0001.10");
+    assert.equal(richLookup.exitCode, 0);
+    assert.equal(richLookup.json.sourceTrace[0].page, 1);
     assert.deepEqual(rates.json.map((option) => option.column), ["general", "sadc"]);
+    assert.equal(richRates.exitCode, 0);
+    assert.equal(richRates.json[0].sourceTrace[0].page, 1);
   });
 });
 
@@ -287,10 +293,23 @@ test("estimates duty and keeps unresolved estimates successful with warnings", a
       "--customs-value",
       "1000"
     ]);
+    const richEstimate = await invoke([
+      "estimate",
+      path,
+      "--tariff-code",
+      "0001.10",
+      "--effective-date",
+      "2026-07-04",
+      "--customs-value",
+      "1000",
+      "--include-metadata"
+    ]);
     const unresolved = await invoke(["estimate", path, "--tariff-code", "9999.99", "--effective-date", "2026-07-04"]);
 
     assert.equal(estimated.exitCode, 0);
     assert.equal(estimated.json.estimatedDuty, 100);
+    assert.equal(richEstimate.exitCode, 0);
+    assert.equal(richEstimate.json.sourceTrace[0].page, 1);
     assert.equal(unresolved.exitCode, 0);
     assert.equal(unresolved.json.estimatedDuty, null);
     assert.ok(unresolved.stderr.includes("warning: No tariff line"));
