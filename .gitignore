@@ -16,3 +16,8 @@ tmp/
 .agents/
 .claude/
 .codex/
+
+# Private planning/session docs
+[Hh][Aa][Nn][Dd][Oo][Ff][Ff].md
+[Rr][Oo][Aa][Dd][Mm][Aa][Pp].md
+[Ss][Pp][Ee][Cc].md
