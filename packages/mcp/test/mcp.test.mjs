@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { buildCustomsRuleset } from "../../za-customs/dist/src/index.js";
+import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
 import { handleMcpRequest } from "../dist/src/index.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
@@ -53,29 +53,51 @@ function tariffLine(overrides = {}) {
     validFrom: "2026-05-29",
     sourceTrace: [sourceTrace],
     parseConfidence: 1,
-    warnings: []
+    warnings: overrides.warnings ?? []
+  };
+}
+
+function schedule1(lines) {
+  return {
+    schemaVersion: "za-customs.schedule1-parse-result.v1",
+    tariffLines: lines,
+    warnings: [],
+    metrics: {
+      pagesParsed: 1,
+      textItems: 1,
+      layoutRows: 1,
+      candidateRows: lines.length,
+      contextRows: 0,
+      tariffLines: lines.length,
+      rejectedRows: 0
+    }
   };
 }
 
 function ruleset(lines) {
   return buildCustomsRuleset({
-    parseResult: {
-      schemaVersion: "za-customs.schedule1-parse-result.v1",
-      tariffLines: lines,
-      warnings: [],
-      metrics: {
-        pagesParsed: 1,
-        textItems: 1,
-        layoutRows: 1,
-        candidateRows: lines.length,
-        contextRows: 0,
-        tariffLines: lines.length,
-        rejectedRows: 0
-      }
-    },
+    parseResult: schedule1(lines),
     sourceDocuments: [sourceDocument],
     generatedAt: "2026-07-04T00:00:00.000Z",
     effectiveDate: "2026-05-29"
+  });
+}
+
+function container(lines) {
+  return buildCustomsRulesetContainer({
+    manifest: {
+      schemaVersion: "core.ruleset-manifest.v1",
+      rulesetId: "",
+      domain: "za-customs",
+      country: "ZA",
+      publisher: "SARS",
+      generatedAt: "2026-07-04T00:00:00.000Z",
+      effectiveDate: "2026-05-29",
+      sourceDocuments: [sourceDocument],
+      parser: { packageName: "@openschedule/za-customs", packageVersion: "0.0.0" },
+      warnings: []
+    },
+    schedule1Part1: schedule1(lines)
   });
 }
 
@@ -94,12 +116,19 @@ async function writeRuleset(dir, name, value) {
   return path;
 }
 
+async function writeCustomsCache(dir, value) {
+  await writeFile(join(dir, "za-customs.json"), `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
 test("initializes and lists tools/resources", async () => {
   const initialized = await request("initialize");
   const tools = await request("tools/list");
   const resources = await request("resources/list");
 
   assert.equal(initialized.result.protocolVersion, "2025-06-18");
+  assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_lookup"));
+  assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_rates"));
+  assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_estimate"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "lookup_tariff_line"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "list_rate_options"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "check_source_status"));
@@ -200,6 +229,45 @@ test("wraps lookup, rates, estimate, validate, and diff APIs", async () => {
     assert.equal(structured(estimate).estimatedDuty, 100);
     assert.equal(structured(validation).valid, true);
     assert.ok(structured(diff).changes.some((change) => change.category === "description_changed"));
+  });
+});
+
+test("wraps consumer ZA customs cache tools", async () => {
+  await withTempDir(async (dir) => {
+    await writeCustomsCache(
+      dir,
+      container([
+        tariffLine({
+          warnings: ["fixture line warning"],
+          rates: {
+            general: { raw: "10%", kind: "ad_valorem", components: [{ basis: "customs_value", rate: 0.1 }], warnings: ["fixture rate warning"] },
+            sadc: rate("free", "free")
+          }
+        })
+      ])
+    );
+    const base = { cacheDir: dir, sync: "never" };
+
+    const sync = await toolCall("za_customs_sync", base);
+    const lookup = await toolCall("za_customs_lookup", { ...base, tariffCode: "000110" });
+    const richLookup = await toolCall("za_customs_lookup", { ...base, tariffCode: "000110", includeMetadata: true });
+    const rates = await toolCall("za_customs_rates", { ...base, tariffCode: "0001.10" });
+    const richRates = await toolCall("za_customs_rates", { ...base, tariffCode: "0001.10", includeMetadata: true });
+    const estimate = await toolCall("za_customs_estimate", { ...base, tariffCode: "0001.10", customsValue: 1000 });
+    const measures = await toolCall("za_customs_measures", { ...base, tariffCode: "0001.10" });
+    const source = await toolCall("za_customs_source", { ...base, tariffCode: "0001.10" });
+
+    assert.equal(structured(sync).validation.valid, true);
+    assert.equal(structured(lookup).tariffCode, "0001.10");
+    assert.equal(structured(lookup).metadata, undefined);
+    assert.equal(structured(richLookup).metadata.warnings[0], "fixture line warning");
+    assert.deepEqual(structured(rates).map((option) => option.column), ["general", "sadc"]);
+    assert.equal(structured(rates)[0].metadata, undefined);
+    assert.equal(structured(richRates)[0].metadata.warnings[0], "fixture rate warning");
+    assert.equal(structured(estimate).estimatedDuty, 100);
+    assert.equal("sourceTrace" in structured(estimate), false);
+    assert.equal(structured(measures).items[0].metadata, undefined);
+    assert.equal(structured(source)[0].document.fileName, "schedule.pdf");
   });
 });
 

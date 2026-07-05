@@ -14,7 +14,7 @@ import {
   parseSchedule5DrawbacksRefundsTextPages,
   parseSchedule6ExciseRebatesRefundsTextPages,
   ScheduleFamilyQaReportV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

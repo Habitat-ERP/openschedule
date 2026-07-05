@@ -4,7 +4,7 @@ import {
   parseSchedule6ExciseRebatesRefundsPdf,
   parseSchedule6ExciseRebatesRefundsTextPages,
   Schedule6ParseResultV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

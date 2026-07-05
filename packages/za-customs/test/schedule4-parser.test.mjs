@@ -4,7 +4,7 @@ import {
   parseSchedule4RebatesPdf,
   parseSchedule4RebatesTextPages,
   Schedule4ParseResultV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

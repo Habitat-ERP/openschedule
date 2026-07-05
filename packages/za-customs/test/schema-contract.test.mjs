@@ -21,7 +21,7 @@ import {
   Schedule1QaReportV1Schema,
   ScheduleFamilyQaReportV1Schema,
   TariffLineV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 test("schema versions are stable", () => {
   assert.equal(SourceDocumentMetadataV1Schema.properties.schemaVersion.const, "core.source-document-metadata.v1");

@@ -21,6 +21,12 @@ import {
   fetchCustomsSources
 } from "@openschedule/za-sars";
 import {
+  createZaCustoms,
+  type ZaCustomsEffectiveDate,
+  type ZaCustomsMeasureFilter,
+  type ZaCustomsSyncMode
+} from "@openschedule/za-customs";
+import {
   CUSTOMS_RATE_COLUMNS,
   CustomsDutyEstimateV1Schema,
   CustomsRulesetContainerV1Schema,
@@ -43,7 +49,7 @@ import {
   validateCustomsRuleset,
   type CustomsRateColumnV1,
   type CustomsRulesetV1
-} from "@openschedule/za-customs";
+} from "@openschedule/za-customs/internal";
 
 type JsonRpcId = string | number | null;
 type JsonObject = Record<string, unknown>;
@@ -61,6 +67,15 @@ export interface McpRuntime {
 
 const PROTOCOL_VERSION = "2025-06-18";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const CUSTOMS_MEASURE_KINDS = [
+  "ordinary-duty",
+  "excise-levy",
+  "trade-remedy",
+  "rebate",
+  "drawback",
+  "refund",
+  "drawback-or-refund"
+] as const;
 
 const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/core/ruleset-manifest.v1": RulesetManifestV1Schema,
@@ -86,6 +101,16 @@ const SCHEMAS: Record<string, unknown> = {
   "openschedule://schemas/za-customs/tariff-line.v1": TariffLineV1Schema
 };
 
+const CUSTOMS_CLIENT_PROPERTIES = {
+  cacheDir: { type: "string", minLength: 1 },
+  sync: { enum: ["never", "if-missing", "if-stale", "always"] },
+  effectiveDate: { type: "string", pattern: `^(${DATE_PATTERN.source}|latest)$` }
+};
+
+const METADATA_PROPERTY = {
+  includeMetadata: { type: "boolean" }
+};
+
 const TOOLS = [
   tool("discover_sources", "Discover supported official source descriptors.", {
     type: "object",
@@ -106,6 +131,96 @@ const TOOLS = [
     required: ["cacheDir"],
     properties: {
       cacheDir: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_sync", "Fetch/build/update the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    properties: CUSTOMS_CLIENT_PROPERTIES
+  }, false),
+  tool("za_customs_lookup", "Look up one tariff line from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    required: ["tariffCode"],
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      tariffCode: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_rates", "List available rate columns for one tariff line from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    required: ["tariffCode"],
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      tariffCode: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_estimate", "Estimate customs duty from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    required: ["tariffCode"],
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      tariffCode: { type: "string", minLength: 1 },
+      customsValue: { type: "number", minimum: 0 },
+      quantity: { type: "number", minimum: 0 },
+      quantityUnit: { type: "string", minLength: 1 },
+      rateColumn: { enum: [...CUSTOMS_RATE_COLUMNS] }
+    }
+  }, true),
+  tool("za_customs_source", "Return source trace and source document references for one tariff line.", {
+    type: "object",
+    additionalProperties: false,
+    required: ["tariffCode"],
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      tariffCode: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_measures", "List duties, remedies, rebates, drawbacks, and refunds from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      kind: { type: "array", items: { type: "string" } },
+      tariffCode: { type: "string", minLength: 1 },
+      tariffPrefix: { type: "string", minLength: 1 },
+      item: { type: "string", minLength: 1 },
+      code: { type: "string", minLength: 1 },
+      origin: { type: "string", minLength: 1 },
+      limit: { type: "integer", minimum: 1 },
+      cursor: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_duties", "List duty-like measures from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      tariffCode: { type: "string", minLength: 1 },
+      tariffPrefix: { type: "string", minLength: 1 },
+      limit: { type: "integer", minimum: 1 },
+      cursor: { type: "string", minLength: 1 }
+    }
+  }, true),
+  tool("za_customs_reliefs", "List rebate, drawback, and refund measures from the managed ZA customs cache.", {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      ...CUSTOMS_CLIENT_PROPERTIES,
+      ...METADATA_PROPERTY,
+      tariffCode: { type: "string", minLength: 1 },
+      tariffPrefix: { type: "string", minLength: 1 },
+      item: { type: "string", minLength: 1 },
+      code: { type: "string", minLength: 1 },
+      limit: { type: "integer", minimum: 1 },
+      cursor: { type: "string", minLength: 1 }
     }
   }, true),
   tool("build_ruleset", "Build a customs ruleset from one PDF path or one direct PDF inside a source directory.", {
@@ -243,6 +358,51 @@ async function callTool(params: unknown, runtime: McpRuntime): Promise<JsonObjec
       return toolResult(await fetchCustomsSources({ outDir: stringParam(args.outDir, "outDir"), fetch: runtime.fetch }));
     case "check_source_status":
       return toolResult(await checkCustomsSources({ cacheDir: stringParam(args.cacheDir, "cacheDir"), fetch: runtime.fetch }));
+    case "za_customs_sync": {
+      const effectiveDate = optionalEffectiveDate(args.effectiveDate);
+      const customs = await createZaCustoms({
+        cacheDir: optionalString(args.cacheDir) ?? undefined,
+        sync: optionalSyncMode(args.sync) ?? "always",
+        effectiveDate,
+        fetch: runtime.fetch
+      });
+      return toolResult(await customs.sync({
+        mode: "never",
+        effectiveDate
+      }));
+    }
+    case "za_customs_lookup": {
+      const tariffCode = stringParam(args.tariffCode, "tariffCode");
+      const line = (await createCustomsClient(args, runtime)).lookup(tariffCode, metadataOption(args));
+      if (!line) throw new Error(`No tariff line found for ${tariffCode}.`);
+      return toolResult(line);
+    }
+    case "za_customs_rates": {
+      const tariffCode = stringParam(args.tariffCode, "tariffCode");
+      const rates = (await createCustomsClient(args, runtime)).rates(tariffCode, metadataOption(args));
+      if (!rates.length) throw new Error(`No rate options found for ${tariffCode}.`);
+      return toolResult(rates);
+    }
+    case "za_customs_estimate":
+      return toolResult(
+        (await createCustomsClient(args, runtime)).estimate({
+          tariffCode: stringParam(args.tariffCode, "tariffCode"),
+          effectiveDate: estimateEffectiveDate(args.effectiveDate),
+          customsValue: optionalNumber(args.customsValue, "customsValue"),
+          quantity: optionalNumber(args.quantity, "quantity"),
+          quantityUnit: optionalString(args.quantityUnit),
+          rateColumn: optionalRateColumn(args.rateColumn),
+          includeMetadata: optionalBoolean(args.includeMetadata, "includeMetadata")
+        })
+      );
+    case "za_customs_source":
+      return toolResult((await createCustomsClient(args, runtime)).source(stringParam(args.tariffCode, "tariffCode")));
+    case "za_customs_measures":
+      return toolResult((await createCustomsClient(args, runtime)).measures(measureFilter(args)));
+    case "za_customs_duties":
+      return toolResult((await createCustomsClient(args, runtime)).duties(measureFilter(args)));
+    case "za_customs_reliefs":
+      return toolResult((await createCustomsClient(args, runtime)).reliefs(measureFilter(args)));
     case "build_ruleset":
       return toolResult(await buildRuleset(args));
     case "validate_ruleset":
@@ -280,6 +440,34 @@ async function callTool(params: unknown, runtime: McpRuntime): Promise<JsonObjec
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+async function createCustomsClient(args: JsonObject, runtime: McpRuntime) {
+  return createZaCustoms({
+    cacheDir: optionalString(args.cacheDir) ?? undefined,
+    sync: optionalSyncMode(args.sync),
+    effectiveDate: optionalEffectiveDate(args.effectiveDate),
+    fetch: runtime.fetch
+  });
+}
+
+function metadataOption(args: JsonObject): { includeMetadata: boolean } {
+  return { includeMetadata: optionalBoolean(args.includeMetadata, "includeMetadata") };
+}
+
+function measureFilter(args: JsonObject): ZaCustomsMeasureFilter {
+  return {
+    kind: optionalMeasureKinds(args.kind),
+    tariffCode: optionalString(args.tariffCode) ?? undefined,
+    tariffPrefix: optionalString(args.tariffPrefix) ?? undefined,
+    item: optionalString(args.item) ?? undefined,
+    code: optionalString(args.code) ?? undefined,
+    origin: optionalString(args.origin) ?? undefined,
+    effectiveDate: estimateEffectiveDate(args.effectiveDate),
+    limit: optionalInteger(args.limit, "limit") ?? undefined,
+    cursor: optionalString(args.cursor) ?? undefined,
+    includeMetadata: optionalBoolean(args.includeMetadata, "includeMetadata")
+  };
 }
 
 async function buildRuleset(args: JsonObject): Promise<CustomsRulesetV1> {
@@ -411,6 +599,23 @@ function dateParam(value: unknown, name: string): string {
   return valueString;
 }
 
+function estimateEffectiveDate(value: unknown): string | undefined {
+  if (value === undefined || value === "latest") return undefined;
+  return dateParam(value, "effectiveDate");
+}
+
+function optionalEffectiveDate(value: unknown): ZaCustomsEffectiveDate | undefined {
+  if (value === undefined) return undefined;
+  if (value === "latest") return "latest";
+  return dateParam(value, "effectiveDate");
+}
+
+function optionalSyncMode(value: unknown): ZaCustomsSyncMode | undefined {
+  if (value === undefined) return undefined;
+  if (value === "never" || value === "if-missing" || value === "if-stale" || value === "always") return value;
+  throw new Error("sync must be one of: never, if-missing, if-stale, always.");
+}
+
 function optionalString(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
 }
@@ -423,6 +628,19 @@ function optionalStringArray(value: unknown): string[] | undefined {
 function optionalNumber(value: unknown, name: string): number | null {
   if (value === undefined || value === null) return null;
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw new Error(`${name} must be a non-negative number.`);
+  return value;
+}
+
+function optionalInteger(value: unknown, name: string): number | null {
+  const number = optionalNumber(value, name);
+  if (number === null) return null;
+  if (!Number.isInteger(number)) throw new Error(`${name} must be an integer.`);
+  return number;
+}
+
+function optionalBoolean(value: unknown, name: string): boolean {
+  if (value === undefined) return false;
+  if (typeof value !== "boolean") throw new Error(`${name} must be a boolean.`);
   return value;
 }
 
@@ -440,6 +658,19 @@ function optionalRateColumn(value: unknown): CustomsRateColumnV1 | undefined {
     throw new Error(`rateColumn must be one of: ${CUSTOMS_RATE_COLUMNS.join(", ")}.`);
   }
   return value as CustomsRateColumnV1;
+}
+
+function optionalMeasureKinds(value: unknown): ZaCustomsMeasureFilter["kind"] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string" && item)) {
+    throw new Error("kind must be an array of strings.");
+  }
+  for (const item of value) {
+    if (!CUSTOMS_MEASURE_KINDS.includes(item as (typeof CUSTOMS_MEASURE_KINDS)[number])) {
+      throw new Error(`kind must contain only: ${CUSTOMS_MEASURE_KINDS.join(", ")}.`);
+    }
+  }
+  return value as ZaCustomsMeasureFilter["kind"];
 }
 
 if (await isDirectRun()) {

@@ -4,7 +4,7 @@ import {
   parseSchedule1Part1Pdf,
   parseSchedule1Part1TextPages,
   Schedule1ParseResultV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

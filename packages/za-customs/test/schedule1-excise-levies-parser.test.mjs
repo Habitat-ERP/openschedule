@@ -4,7 +4,7 @@ import {
   parseSchedule1ExciseLeviesPdf,
   parseSchedule1ExciseLeviesTextPages,
   Schedule1ExciseLeviesParseResultV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

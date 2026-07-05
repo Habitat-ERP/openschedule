@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { buildCustomsRuleset } from "../../za-customs/dist/src/index.js";
+import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
 import { runCli } from "../dist/src/index.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
@@ -56,29 +56,51 @@ function tariffLine(overrides = {}) {
     validFrom: "2026-05-29",
     sourceTrace: [sourceTrace],
     parseConfidence: 1,
-    warnings: []
+    warnings: overrides.warnings ?? []
+  };
+}
+
+function schedule1(lines) {
+  return {
+    schemaVersion: "za-customs.schedule1-parse-result.v1",
+    tariffLines: lines,
+    warnings: [],
+    metrics: {
+      pagesParsed: 1,
+      textItems: 1,
+      layoutRows: 1,
+      candidateRows: lines.length,
+      contextRows: 0,
+      tariffLines: lines.length,
+      rejectedRows: 0
+    }
   };
 }
 
 function ruleset(lines) {
   return buildCustomsRuleset({
-    parseResult: {
-      schemaVersion: "za-customs.schedule1-parse-result.v1",
-      tariffLines: lines,
-      warnings: [],
-      metrics: {
-        pagesParsed: 1,
-        textItems: 1,
-        layoutRows: 1,
-        candidateRows: lines.length,
-        contextRows: 0,
-        tariffLines: lines.length,
-        rejectedRows: 0
-      }
-    },
+    parseResult: schedule1(lines),
     sourceDocuments: [sourceDocument],
     generatedAt: "2026-07-04T00:00:00.000Z",
     effectiveDate: "2026-05-29"
+  });
+}
+
+function container(lines) {
+  return buildCustomsRulesetContainer({
+    manifest: {
+      schemaVersion: "core.ruleset-manifest.v1",
+      rulesetId: "",
+      domain: "za-customs",
+      country: "ZA",
+      publisher: "SARS",
+      generatedAt: "2026-07-04T00:00:00.000Z",
+      effectiveDate: "2026-05-29",
+      sourceDocuments: [sourceDocument],
+      parser: { packageName: "@openschedule/za-customs", packageVersion: "0.0.0" },
+      warnings: []
+    },
+    schedule1Part1: schedule1(lines)
   });
 }
 
@@ -95,6 +117,10 @@ async function writeRuleset(dir, name, value) {
   const path = join(dir, name);
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   return path;
+}
+
+async function writeCustomsCache(dir, value) {
+  await writeFile(join(dir, "za-customs.json"), `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
 test("discovers SARS customs sources as JSON", async () => {
@@ -164,6 +190,47 @@ test("looks up tariff lines and lists available rates", async () => {
     assert.equal(lookup.exitCode, 0);
     assert.equal(lookup.json.tariffCode, "0001.10");
     assert.deepEqual(rates.json.map((option) => option.column), ["general", "sadc"]);
+  });
+});
+
+test("runs consumer customs commands from the managed cache", async () => {
+  await withTempDir(async (dir) => {
+    await writeCustomsCache(
+      dir,
+      container([
+        tariffLine({
+          warnings: ["fixture line warning"],
+          rates: {
+            general: rate("10%", "ad_valorem", [{ basis: "customs_value", rate: 0.1 }], ["fixture rate warning"]),
+            sadc: rate("free", "free")
+          }
+        })
+      ])
+    );
+    const base = ["--cache", dir, "--sync", "never"];
+
+    const sync = await invoke(["customs", "sync", ...base]);
+    const lookup = await invoke(["customs", "lookup", ...base, "--tariff-code", "000110"]);
+    const richLookup = await invoke(["customs", "lookup", ...base, "--tariff-code", "000110", "--include-metadata"]);
+    const rates = await invoke(["customs", "rates", ...base, "--tariff-code", "0001.10"]);
+    const richRates = await invoke(["customs", "rates", ...base, "--tariff-code", "0001.10", "--include-metadata"]);
+    const estimate = await invoke(["customs", "estimate", ...base, "--tariff-code", "0001.10", "--customs-value", "1000"]);
+    const measures = await invoke(["customs", "measures", ...base, "--tariff-code", "0001.10"]);
+    const source = await invoke(["customs", "source", ...base, "--tariff-code", "0001.10"]);
+
+    assert.equal(sync.exitCode, 0);
+    assert.equal(sync.json.validation.valid, true);
+    assert.equal(lookup.exitCode, 0);
+    assert.equal(lookup.json.tariffCode, "0001.10");
+    assert.equal(lookup.json.metadata, undefined);
+    assert.equal(richLookup.json.metadata.warnings[0], "fixture line warning");
+    assert.deepEqual(rates.json.map((option) => option.column), ["general", "sadc"]);
+    assert.equal(rates.json[0].metadata, undefined);
+    assert.equal(richRates.json[0].metadata.warnings[0], "fixture rate warning");
+    assert.equal(estimate.json.estimatedDuty, 100);
+    assert.equal("sourceTrace" in estimate.json, false);
+    assert.equal(measures.json.items[0].metadata, undefined);
+    assert.equal(source.json[0].document.fileName, "schedule.pdf");
   });
 });
 

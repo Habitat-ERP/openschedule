@@ -12,7 +12,7 @@ import {
   formatTariffLineLeafLabel,
   validateCustomsRuleset,
   validateCustomsRulesetContainer
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 const generatedAt = "2026-07-04T00:00:00.000Z";

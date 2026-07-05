@@ -4,7 +4,7 @@ import {
   buildCustomsRuleset,
   estimateCustomsDuty,
   listRateOptions
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 const sourceTrace = {

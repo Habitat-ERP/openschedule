@@ -13,7 +13,7 @@ import type {
   Schedule5ParseResultV1,
   Schedule6ParseResultV1,
   TariffLineV1
-} from "../src/index.js";
+} from "../src/internal.js";
 
 const sourceTrace = {
   schemaVersion: "core.source-trace.v1",

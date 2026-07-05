@@ -4,7 +4,7 @@ import {
   parseSchedule3IndustrialRebatesPdf,
   parseSchedule3IndustrialRebatesTextPages,
   Schedule3ParseResultV1Schema
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

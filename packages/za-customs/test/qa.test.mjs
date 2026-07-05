@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   createSchedule1QaReport,
   inspectSchedule1TariffLines
-} from "../dist/src/index.js";
+} from "../dist/src/internal.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 

@@ -21,6 +21,12 @@ import {
   FetchedCustomsSourceV1Schema
 } from "@openschedule/za-sars";
 import {
+  createZaCustoms,
+  type ZaCustomsEffectiveDate,
+  type ZaCustomsMeasureFilter,
+  type ZaCustomsSyncMode
+} from "@openschedule/za-customs";
+import {
   buildCustomsRulesetFromPdf,
   createSchedule1QaReport,
   diffCustomsRulesets,
@@ -47,9 +53,10 @@ import {
   type CustomsRulesetV1,
   type Schedule1ParseResultV1,
   type Schedule1QaSource
-} from "@openschedule/za-customs";
+} from "@openschedule/za-customs/internal";
 
 type Write = (text: string) => void;
+type ParsedValues = Record<string, string | boolean | Array<string | boolean> | undefined>;
 
 export interface CliRuntime {
   stdout?: Write;
@@ -58,6 +65,15 @@ export interface CliRuntime {
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const CUSTOMS_MEASURE_KINDS = [
+  "ordinary-duty",
+  "excise-levy",
+  "trade-remedy",
+  "rebate",
+  "drawback",
+  "refund",
+  "drawback-or-refund"
+] as const;
 
 class UsageError extends Error {}
 class OperationalError extends Error {}
@@ -74,6 +90,9 @@ export async function runCli(args = process.argv.slice(2), runtime: CliRuntime =
     }
 
     switch (command) {
+      case "customs":
+        writeJson(stdout, await runCustoms(rest, runtime.fetch));
+        return 0;
       case "discover":
         writeJson(stdout, runDiscover(rest));
         return 0;
@@ -118,6 +137,126 @@ export async function runCli(args = process.argv.slice(2), runtime: CliRuntime =
     stderr(`error: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
+}
+
+async function runCustoms(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const [subcommand, ...rest] = args;
+  if (subcommand === "sync") return runCustomsSync(rest, fetcher);
+  if (subcommand === "lookup") return runCustomsLookup(rest, fetcher);
+  if (subcommand === "rates") return runCustomsRates(rest, fetcher);
+  if (subcommand === "estimate") return runCustomsEstimate(rest, fetcher);
+  if (subcommand === "source") return runCustomsSource(rest, fetcher);
+  if (subcommand === "measures") return runCustomsMeasures(rest, fetcher, "measures");
+  if (subcommand === "duties") return runCustomsMeasures(rest, fetcher, "duties");
+  if (subcommand === "reliefs") return runCustomsMeasures(rest, fetcher, "reliefs");
+  throw new UsageError("customs requires sync, lookup, rates, estimate, source, measures, duties, or reliefs.");
+}
+
+async function runCustomsSync(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, customsBaseOptions());
+  requireNoPositionals(positionals, "customs sync");
+  const effectiveDate = optionalEffectiveDate(values["effective-date"]);
+  const customs = await createZaCustoms({
+    cacheDir: optionalString(values.cache) ?? undefined,
+    sync: optionalSyncMode(values.sync) ?? "always",
+    effectiveDate,
+    fetch: fetcher
+  });
+  return customs.sync({
+    mode: "never",
+    effectiveDate
+  });
+}
+
+async function runCustomsLookup(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    ...customsBaseOptions(),
+    ...metadataOptions(),
+    "tariff-code": { type: "string" }
+  });
+  requireNoPositionals(positionals, "customs lookup --tariff-code <code>");
+  const tariffCode = stringOption(values["tariff-code"], "--tariff-code");
+  const line = (await createCustomsClient(values, fetcher)).lookup(tariffCode, metadataOption(values));
+  if (!line) throw new OperationalError(`No tariff line found for ${tariffCode}.`);
+  return line;
+}
+
+async function runCustomsRates(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    ...customsBaseOptions(),
+    ...metadataOptions(),
+    "tariff-code": { type: "string" }
+  });
+  requireNoPositionals(positionals, "customs rates --tariff-code <code>");
+  const tariffCode = stringOption(values["tariff-code"], "--tariff-code");
+  const rates = (await createCustomsClient(values, fetcher)).rates(tariffCode, metadataOption(values));
+  if (!rates.length) throw new OperationalError(`No rate options found for ${tariffCode}.`);
+  return rates;
+}
+
+async function runCustomsEstimate(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    ...customsBaseOptions(),
+    ...metadataOptions(),
+    "tariff-code": { type: "string" },
+    "customs-value": { type: "string" },
+    quantity: { type: "string" },
+    "quantity-unit": { type: "string" },
+    "rate-column": { type: "string" }
+  });
+  requireNoPositionals(positionals, "customs estimate --tariff-code <code>");
+  return (await createCustomsClient(values, fetcher)).estimate({
+    tariffCode: stringOption(values["tariff-code"], "--tariff-code"),
+    effectiveDate: optionalDateOption(values["effective-date"], "--effective-date") ?? undefined,
+    customsValue: optionalNumber(values["customs-value"], "--customs-value"),
+    quantity: optionalNumber(values.quantity, "--quantity"),
+    quantityUnit: optionalString(values["quantity-unit"]),
+    rateColumn: optionalRateColumn(values["rate-column"]),
+    includeMetadata: Boolean(values["include-metadata"])
+  });
+}
+
+async function runCustomsSource(args: string[], fetcher?: typeof fetch): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    ...customsBaseOptions(),
+    "tariff-code": { type: "string" }
+  });
+  requireNoPositionals(positionals, "customs source --tariff-code <code>");
+  return (await createCustomsClient(values, fetcher)).source(stringOption(values["tariff-code"], "--tariff-code"));
+}
+
+async function runCustomsMeasures(
+  args: string[],
+  fetcher: typeof fetch | undefined,
+  method: "measures" | "duties" | "reliefs"
+): Promise<unknown> {
+  const { values, positionals } = parseOptions(args, {
+    ...customsBaseOptions(),
+    ...metadataOptions(),
+    kind: { type: "string", multiple: true },
+    schedule: { type: "string", multiple: true },
+    part: { type: "string", multiple: true },
+    "tariff-code": { type: "string" },
+    "tariff-prefix": { type: "string" },
+    "tariff-heading": { type: "string" },
+    "tariff-heading-prefix": { type: "string" },
+    "tariff-item": { type: "string" },
+    "tariff-item-prefix": { type: "string" },
+    item: { type: "string" },
+    "item-prefix": { type: "string" },
+    code: { type: "string" },
+    "code-prefix": { type: "string" },
+    origin: { type: "string" },
+    "rate-column": { type: "string" },
+    limit: { type: "string" },
+    cursor: { type: "string" }
+  });
+  requireNoPositionals(positionals, `customs ${method}`);
+  const customs = await createCustomsClient(values, fetcher);
+  const filter = measureFilter(values);
+  if (method === "duties") return customs.duties(filter);
+  if (method === "reliefs") return customs.reliefs(filter);
+  return customs.measures(filter);
 }
 
 function runDiscover(args: string[]): unknown {
@@ -294,6 +433,61 @@ function requirePositionals(actual: readonly string[], expected: readonly string
   }
 }
 
+function requireNoPositionals(actual: readonly string[], syntax: string): void {
+  if (actual.length) throw new UsageError(`Expected: openschedule ${syntax}`);
+}
+
+function customsBaseOptions(): NonNullable<ParseArgsConfig["options"]> {
+  return {
+    cache: { type: "string" },
+    sync: { type: "string" },
+    "effective-date": { type: "string" }
+  };
+}
+
+function metadataOptions(): NonNullable<ParseArgsConfig["options"]> {
+  return {
+    "include-metadata": { type: "boolean" }
+  };
+}
+
+async function createCustomsClient(values: ParsedValues, fetcher?: typeof fetch) {
+  return createZaCustoms({
+    cacheDir: optionalString(values.cache) ?? undefined,
+    sync: optionalSyncMode(values.sync),
+    effectiveDate: optionalEffectiveDate(values["effective-date"]),
+    fetch: fetcher
+  });
+}
+
+function metadataOption(values: ParsedValues): { includeMetadata: boolean } {
+  return { includeMetadata: Boolean(values["include-metadata"]) };
+}
+
+function measureFilter(values: ParsedValues): ZaCustomsMeasureFilter {
+  return {
+    kind: optionalMeasureKinds(values.kind),
+    schedule: optionalStringSet(values.schedule),
+    part: optionalStringSet(values.part),
+    tariffCode: optionalString(values["tariff-code"]) ?? undefined,
+    tariffPrefix: optionalString(values["tariff-prefix"]) ?? undefined,
+    tariffHeading: optionalString(values["tariff-heading"]) ?? undefined,
+    tariffHeadingPrefix: optionalString(values["tariff-heading-prefix"]) ?? undefined,
+    tariffItem: optionalString(values["tariff-item"]) ?? undefined,
+    tariffItemPrefix: optionalString(values["tariff-item-prefix"]) ?? undefined,
+    item: optionalString(values.item) ?? undefined,
+    itemPrefix: optionalString(values["item-prefix"]) ?? undefined,
+    code: optionalString(values.code) ?? undefined,
+    codePrefix: optionalString(values["code-prefix"]) ?? undefined,
+    origin: optionalString(values.origin) ?? undefined,
+    rateColumn: optionalRateColumn(values["rate-column"]),
+    effectiveDate: estimateEffectiveDate(values["effective-date"]),
+    limit: optionalInteger(values.limit, "--limit") ?? undefined,
+    cursor: optionalString(values.cursor) ?? undefined,
+    includeMetadata: Boolean(values["include-metadata"])
+  };
+}
+
 async function readRuleset(path: string): Promise<CustomsRulesetV1> {
   const ruleset = (await readJson(path)) as CustomsRulesetV1;
   assertValidRuleset(ruleset, path);
@@ -367,6 +561,13 @@ function optionalStringArray(value: unknown): string[] | undefined {
   return Array.isArray(value) && value.every((item) => typeof item === "string" && item) ? value : undefined;
 }
 
+function optionalStringSet(value: unknown): string | string[] | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" && value) return value;
+  if (Array.isArray(value) && value.every((item) => typeof item === "string" && item)) return value;
+  throw new UsageError("option must be a non-empty string.");
+}
+
 function dateOption(value: unknown, name: string): string {
   const date = stringOption(value, name);
   if (!DATE_PATTERN.test(date)) throw new UsageError(`${name} must be YYYY-MM-DD.`);
@@ -376,6 +577,23 @@ function dateOption(value: unknown, name: string): string {
 function optionalDateOption(value: unknown, name: string): string | null {
   if (value === undefined) return null;
   return dateOption(value, name);
+}
+
+function estimateEffectiveDate(value: unknown): string | undefined {
+  if (value === undefined || value === "latest") return undefined;
+  return dateOption(value, "--effective-date");
+}
+
+function optionalEffectiveDate(value: unknown): ZaCustomsEffectiveDate | undefined {
+  if (value === undefined) return undefined;
+  if (value === "latest") return "latest";
+  return dateOption(value, "--effective-date");
+}
+
+function optionalSyncMode(value: unknown): ZaCustomsSyncMode | undefined {
+  if (value === undefined) return undefined;
+  if (value === "never" || value === "if-missing" || value === "if-stale" || value === "always") return value;
+  throw new UsageError("--sync must be one of: never, if-missing, if-stale, always.");
 }
 
 function optionalNumber(value: unknown, name: string): number | null {
@@ -404,6 +622,18 @@ function stringOptions(value: unknown, name: string): string[] {
   if (typeof value === "string" && value) return [value];
   if (Array.isArray(value) && value.every((item) => typeof item === "string" && item)) return value;
   throw new UsageError(`${name} is required.`);
+}
+
+function optionalMeasureKinds(value: unknown): ZaCustomsMeasureFilter["kind"] | undefined {
+  const values = optionalStringSet(value);
+  if (values === undefined) return undefined;
+  const list = Array.isArray(values) ? values : [values];
+  for (const item of list) {
+    if (!CUSTOMS_MEASURE_KINDS.includes(item as (typeof CUSTOMS_MEASURE_KINDS)[number])) {
+      throw new UsageError(`--kind must be one of: ${CUSTOMS_MEASURE_KINDS.join(", ")}.`);
+    }
+  }
+  return Array.isArray(values) ? list as ZaCustomsMeasureFilter["kind"] : list[0] as ZaCustomsMeasureFilter["kind"];
 }
 
 function optionalRateColumn(value: unknown): CustomsRateColumnV1 | undefined {
@@ -462,6 +692,14 @@ function schemaGroups(): Record<string, Record<string, unknown>> {
 
 function usage(): string {
   return `Usage:
+  openschedule customs sync [--cache <dir>] [--sync never|if-missing|if-stale|always] [--effective-date latest|YYYY-MM-DD]
+  openschedule customs lookup --tariff-code <code> [--cache <dir>] [--sync mode] [--include-metadata]
+  openschedule customs rates --tariff-code <code> [--cache <dir>] [--sync mode] [--include-metadata]
+  openschedule customs estimate --tariff-code <code> [--cache <dir>] [--effective-date YYYY-MM-DD] [--customs-value n] [--quantity n --quantity-unit unit] [--rate-column ${CUSTOMS_RATE_COLUMNS.join("|")}] [--include-metadata]
+  openschedule customs source --tariff-code <code> [--cache <dir>] [--sync mode]
+  openschedule customs measures|duties|reliefs [--cache <dir>] [--tariff-code <code>] [--tariff-prefix <prefix>] [--include-metadata]
+
+Legacy/internal:
   openschedule discover za-sars customs
   openschedule fetch za-sars customs --out <dir>
   openschedule status za-sars customs --cache <dir>
