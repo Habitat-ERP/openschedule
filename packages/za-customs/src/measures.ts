@@ -103,7 +103,7 @@ export interface ZaCustomsMeasurePage {
   nextCursor: string | null;
 }
 
-interface InternalZaCustomsMeasure extends Omit<ZaCustomsMeasure, "metadata" | "rates" | "rate"> {
+export interface InternalZaCustomsMeasure extends Omit<ZaCustomsMeasure, "metadata" | "rates" | "rate"> {
   rates?: TariffLineV1["rates"];
   rate?: DutyRateV1;
   confidence: number;
@@ -118,15 +118,15 @@ export function listCustomsMeasures(
   container: CustomsRulesetContainerV1,
   filter: ZaCustomsMeasureFilter = {}
 ): ZaCustomsMeasurePage {
-  const limit = Math.min(Math.max(Math.trunc(filter.limit ?? DEFAULT_LIMIT), 1), MAX_LIMIT);
-  const matched = allMeasures(container)
-    .filter((measure) => matchesFilter(measure, filter))
+  const limit = customsMeasureLimit(filter);
+  const matched = allCustomsMeasures(container)
+    .filter((measure) => matchesCustomsMeasureFilter(measure, filter))
     .sort((left, right) => left.id.localeCompare(right.id));
   const cursor = filter.cursor;
   const items = cursor ? matched.filter((measure) => measure.id > cursor) : matched;
   const page = items.slice(0, limit);
   return {
-    items: page.map((measure) => publicMeasure(measure, filter)),
+    items: page.map((measure) => publicCustomsMeasure(measure, filter)),
     nextCursor: items.length > page.length ? page.at(-1)?.id ?? null : null
   };
 }
@@ -151,7 +151,11 @@ export function listCustomsReliefs(
   });
 }
 
-function allMeasures(container: CustomsRulesetContainerV1): InternalZaCustomsMeasure[] {
+export function customsMeasureLimit(filter: Pick<ZaCustomsMeasureFilter, "limit"> = {}): number {
+  return Math.min(Math.max(Math.trunc(filter.limit ?? DEFAULT_LIMIT), 1), MAX_LIMIT);
+}
+
+export function allCustomsMeasures(container: CustomsRulesetContainerV1): InternalZaCustomsMeasure[] {
   return [
     ...container.schedule1Part1.tariffLines.map((line) => ({
       id: `ordinary-duty:1:${line.normalizedTariffCode}`,
@@ -302,7 +306,7 @@ function rebateMeasure(
   };
 }
 
-function publicMeasure(measure: InternalZaCustomsMeasure, options: ZaCustomsMetadataOptions): ZaCustomsMeasure {
+export function publicCustomsMeasure(measure: InternalZaCustomsMeasure, options: ZaCustomsMetadataOptions): ZaCustomsMeasure {
   const { confidence, warnings, sourceTrace, rates, rate, ...publicFields } = measure;
   return {
     ...publicFields,
@@ -332,7 +336,7 @@ function publicDutyRate(rate: DutyRateV1, options: ZaCustomsMetadataOptions): Za
   };
 }
 
-function matchesFilter(measure: InternalZaCustomsMeasure, filter: ZaCustomsMeasureFilter): boolean {
+export function matchesCustomsMeasureFilter(measure: InternalZaCustomsMeasure, filter: ZaCustomsMeasureFilter): boolean {
   if (!matchesSet(measure.kind, filter.kind)) return false;
   if (!matchesSet(measure.schedule, filter.schedule)) return false;
   if (filter.part !== undefined && !matchesSet(measure.part ?? "", filter.part)) return false;

@@ -1,8 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import {
+  ZA_CUSTOMS_MANIFEST_FILE,
+  ZA_CUSTOMS_MEASURES_FILE,
+  ZA_CUSTOMS_TARIFF_LINES_FILE,
+  ZA_CUSTOMS_TARIFF_LINES_INDEX_FILE,
+  writeCacheArtifacts,
+  zaCustomsCachePaths
+} from "../dist/src/cache-artifacts.js";
 import { createZaCustoms } from "../dist/src/index.js";
 import { buildCustomsRulesetContainer } from "../dist/src/internal.js";
 
@@ -27,13 +35,14 @@ function rate(raw, kind, components = [], warnings = []) {
   return { raw, kind, components, warnings };
 }
 
-function container() {
-  const line = {
+function tariffLine(overrides = {}) {
+  const tariffCode = overrides.tariffCode ?? "0001.10";
+  return {
     schemaVersion: "za-customs.tariff-line.v1",
-    tariffCode: "0001.10",
-    normalizedTariffCode: "000110",
-    description: "Synthetic goods",
-    normalizedDescription: "Synthetic goods",
+    tariffCode,
+    normalizedTariffCode: tariffCode.replace(/\D/g, ""),
+    description: overrides.description ?? "Synthetic goods",
+    normalizedDescription: overrides.normalizedDescription ?? "Synthetic goods",
     statisticalUnit: "kg",
     rates: {
       general: rate("10%", "ad_valorem", [{ basis: "customs_value", rate: 0.1 }], ["fixture rate warning"]),
@@ -44,6 +53,17 @@ function container() {
     parseConfidence: 1,
     warnings: ["fixture line warning"]
   };
+}
+
+function container() {
+  const lines = [
+    tariffLine(),
+    tariffLine({
+      tariffCode: "0001.20",
+      description: "Second synthetic goods",
+      normalizedDescription: "Second synthetic goods"
+    })
+  ];
   return buildCustomsRulesetContainer({
     manifest: {
       schemaVersion: "core.ruleset-manifest.v1",
@@ -59,15 +79,15 @@ function container() {
     },
     schedule1Part1: {
       schemaVersion: "za-customs.schedule1-parse-result.v1",
-      tariffLines: [line],
+      tariffLines: lines,
       warnings: [],
       metrics: {
         pagesParsed: 1,
         textItems: 1,
         layoutRows: 1,
-        candidateRows: 1,
+        candidateRows: lines.length,
         contextRows: 0,
-        tariffLines: 1,
+        tariffLines: lines.length,
         rejectedRows: 0
       }
     }
@@ -78,11 +98,19 @@ test("createZaCustoms loads cached data and exposes consumer methods", async () 
   const cacheDir = await mkdtemp(join(tmpdir(), "openschedule-public-api-"));
   try {
     const artifact = container();
-    await writeFile(join(cacheDir, "za-customs.json"), `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
+    await writeCacheArtifacts(zaCustomsCachePaths(cacheDir), artifact);
+    const cacheFiles = await readdir(cacheDir);
+    assert.ok(cacheFiles.includes(ZA_CUSTOMS_MANIFEST_FILE));
+    assert.ok(cacheFiles.includes(ZA_CUSTOMS_TARIFF_LINES_FILE));
+    assert.ok(cacheFiles.includes(ZA_CUSTOMS_TARIFF_LINES_INDEX_FILE));
+    assert.ok(cacheFiles.includes(ZA_CUSTOMS_MEASURES_FILE));
 
     const customs = await createZaCustoms({ cacheDir, sync: "never" });
 
     assert.equal(customs.rulesetId, artifact.manifest.rulesetId);
+    const syncResult = await customs.sync({ mode: "never" });
+    assert.ok(syncResult.manifestPath.endsWith(ZA_CUSTOMS_MANIFEST_FILE));
+    assert.equal(syncResult.artifactPath, undefined);
 
     const line = customs.lookup("0001.10");
     assert.equal(line.normalizedTariffCode, "000110");
@@ -90,6 +118,7 @@ test("createZaCustoms loads cached data and exposes consumer methods", async () 
     assert.equal("warnings" in line, false);
     assert.equal(line.metadata, undefined);
     assert.equal(line.rates.general.metadata, undefined);
+    assert.equal(customs.lookup("000120").description, "Second synthetic goods");
 
     const richLine = customs.lookup("000110", { includeMetadata: true });
     assert.equal(richLine.tariffCode, "0001.10");

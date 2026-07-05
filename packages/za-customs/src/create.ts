@@ -1,8 +1,8 @@
 import { constants } from "node:fs";
-import { access, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, rename, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import type { SourceDocumentMetadataV1, SourceTraceV1, ValidationReportV1 } from "@openschedule/core";
+import type { RulesetManifestV1, SourceDocumentMetadataV1, SourceTraceV1, ValidationReportV1 } from "@openschedule/core";
 import { hashFileSha256 } from "@openschedule/core";
 import {
   checkCustomsSources,
@@ -12,11 +12,19 @@ import {
   type SarsCustomsSourceV1
 } from "@openschedule/za-sars";
 import PackageJson from "../package.json" with { type: "json" };
+import {
+  listMeasuresFromArtifacts,
+  readCacheArtifacts,
+  readTariffLine,
+  readTariffLines,
+  writeCacheArtifacts,
+  zaCustomsCachePaths,
+  type ZaCustomsCacheArtifacts,
+  type ZaCustomsCachePaths
+} from "./cache-artifacts.js";
 import { estimateCustomsDuty, listRateOptions } from "./estimator.js";
-import { listCustomsDuties, listCustomsMeasures, listCustomsReliefs } from "./measures.js";
 import {
   buildCustomsRulesetContainer,
-  findTariffLine,
   formatTariffLineDisplayName,
   validateCustomsRulesetContainer
 } from "./rulesets.js";
@@ -66,7 +74,7 @@ export interface ZaCustomsEvent {
 export interface ZaCustomsSyncResult {
   rulesetId: string;
   cacheDir: string;
-  artifactPath: string;
+  manifestPath: string;
   fetched: string[];
   warnings: string[];
   validation: ValidationReportV1;
@@ -141,12 +149,7 @@ export interface ZaCustoms {
   reliefs(filter?: Omit<ZaCustomsMeasureFilter, "kind">): ZaCustomsMeasurePage;
 }
 
-interface CachePaths {
-  root: string;
-  sources: string;
-  tmp: string;
-  artifact: string;
-}
+type CachePaths = ZaCustomsCachePaths;
 
 interface LocalSource {
   document: SourceDocumentMetadataV1;
@@ -156,13 +159,12 @@ interface LocalSource {
 }
 
 interface SyncCacheResult {
-  container: CustomsRulesetContainerV1;
+  artifacts: ZaCustomsCacheArtifacts;
   fetched: string[];
   warnings: string[];
   validation: ValidationReportV1;
 }
 
-const ARTIFACT_FILE = "za-customs.json";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function createZaCustoms(options: CreateZaCustomsOptions = {}): Promise<ZaCustoms> {
@@ -174,30 +176,30 @@ export async function createZaCustoms(options: CreateZaCustomsOptions = {}): Pro
   await mkdir(paths.sources, { recursive: true });
   await mkdir(paths.tmp, { recursive: true });
 
-  let container = await readCachedContainer(paths.artifact);
+  let artifacts = await readCacheArtifacts(paths);
+  if (!artifacts && mode === "never" && await exists(paths.legacyContainer)) {
+    throw new Error(`${paths.legacyContainer} is an old ZA customs cache. Run createZaCustoms({ sync: "always" }) or openschedule customs sync to rebuild indexed artifacts.`);
+  }
   let initialSyncResult: ZaCustomsSyncResult | undefined;
-  if (mode === "always" || mode === "if-stale" || !container) {
+  if (mode === "always" || mode === "if-stale" || !artifacts) {
     const result = await syncCache(paths, mode, runtime);
-    container = result.container;
+    artifacts = result.artifacts;
     initialSyncResult = syncResult(paths, result);
   }
-  if (!container) {
-    container = await buildFromCache(paths, runtime);
-  }
 
-  return new CachedZaCustoms(paths, runtime, container, initialSyncResult);
+  return new CachedZaCustoms(paths, runtime, artifacts, initialSyncResult);
 }
 
 class CachedZaCustoms implements ZaCustoms {
   constructor(
     private readonly paths: CachePaths,
     private readonly options: CreateZaCustomsOptions & { effectiveDate: ZaCustomsEffectiveDate },
-    private container: CustomsRulesetContainerV1,
+    private artifacts: ZaCustomsCacheArtifacts,
     private initialSyncResult?: ZaCustomsSyncResult
   ) {}
 
   get rulesetId(): string {
-    return this.container.manifest.rulesetId;
+    return this.artifacts.manifest.rulesetManifest.rulesetId;
   }
 
   async sync(options: { mode?: ZaCustomsSyncMode; effectiveDate?: ZaCustomsEffectiveDate } = {}): Promise<ZaCustomsSyncResult> {
@@ -208,17 +210,13 @@ class CachedZaCustoms implements ZaCustoms {
         this.initialSyncResult = undefined;
         return result;
       }
-      const validation = validateCustomsRulesetContainer(this.container);
-      if (!validation.valid) {
-        throw new Error(`ZA customs cache contains an invalid ruleset: ${validation.issues.map((issue) => issue.code).join(", ")}`);
-      }
       return {
-        rulesetId: this.container.manifest.rulesetId,
+        rulesetId: this.rulesetId,
         cacheDir: this.paths.root,
-        artifactPath: this.paths.artifact,
+        manifestPath: this.paths.manifest,
         fetched: [],
-        warnings: this.container.manifest.warnings,
-        validation
+        warnings: this.artifacts.manifest.rulesetManifest.warnings,
+        validation: validCacheReport()
       };
     }
 
@@ -226,47 +224,55 @@ class CachedZaCustoms implements ZaCustoms {
       ...this.options,
       effectiveDate: options.effectiveDate ?? this.options.effectiveDate
     });
-    this.container = result.container;
+    this.artifacts = result.artifacts;
     this.initialSyncResult = undefined;
     return syncResult(this.paths, result);
   }
 
   lookup(tariffCode: string, options: ZaCustomsMetadataOptions = {}): ZaCustomsTariffLine | null {
-    const line = findTariffLine(containerAsSchedule1Ruleset(this.container), tariffCode);
-    return line ? consumerLine(line, this.container, options) : null;
+    const line = readTariffLine(this.artifacts, tariffCode, defaultEffectiveDate(this.options.effectiveDate, this.artifacts));
+    return line ? consumerLine(line, this.artifacts.manifest.rulesetManifest, options) : null;
   }
 
   rates(tariffCode: string, options: ZaCustomsMetadataOptions = {}): ZaCustomsRateOption[] {
-    return listRateOptions(containerAsSchedule1Ruleset(this.container), tariffCode).map((rate) => consumerRateOption(rate, options));
+    const line = readTariffLine(this.artifacts, tariffCode, defaultEffectiveDate(this.options.effectiveDate, this.artifacts));
+    if (!line) return [];
+    return listRateOptions(artifactAsSchedule1Ruleset(this.artifacts, [line]), tariffCode).map((rate) => consumerRateOption(rate, options));
   }
 
   estimate(options: ZaCustomsEstimateOptions): ZaCustomsDutyEstimate {
     const { includeMetadata, ...estimateOptions } = options;
     return consumerEstimate(estimateCustomsDuty({
       ...estimateOptions,
-      ruleset: containerAsSchedule1Ruleset(this.container),
-      effectiveDate: estimateOptions.effectiveDate ?? defaultEffectiveDate(this.options.effectiveDate, this.container)
+      ruleset: artifactAsSchedule1Ruleset(this.artifacts, readTariffLines(this.artifacts, estimateOptions.tariffCode)),
+      effectiveDate: estimateOptions.effectiveDate ?? defaultEffectiveDate(this.options.effectiveDate, this.artifacts)
     }), { includeMetadata });
   }
 
   source(tariffCode: string): ZaCustomsSourceReference[] {
-    const line = findTariffLine(containerAsSchedule1Ruleset(this.container), tariffCode);
+    const line = readTariffLine(this.artifacts, tariffCode, defaultEffectiveDate(this.options.effectiveDate, this.artifacts));
     return line?.sourceTrace.map((trace) => ({
       trace,
-      document: this.container.manifest.sourceDocuments.find((document) => document.sha256 === trace.sourceDocumentSha256) ?? null
+      document: this.artifacts.manifest.rulesetManifest.sourceDocuments.find((document) => document.sha256 === trace.sourceDocumentSha256) ?? null
     })) ?? [];
   }
 
   measures(filter: ZaCustomsMeasureFilter = {}): ZaCustomsMeasurePage {
-    return listCustomsMeasures(this.container, filter);
+    return listMeasuresFromArtifacts(this.artifacts, filter);
   }
 
   duties(filter: Omit<ZaCustomsMeasureFilter, "kind"> = {}): ZaCustomsMeasurePage {
-    return listCustomsDuties(this.container, filter);
+    return listMeasuresFromArtifacts(this.artifacts, {
+      ...filter,
+      kind: ["ordinary-duty", "excise-levy", "trade-remedy"]
+    });
   }
 
   reliefs(filter: Omit<ZaCustomsMeasureFilter, "kind"> = {}): ZaCustomsMeasurePage {
-    return listCustomsReliefs(this.container, filter);
+    return listMeasuresFromArtifacts(this.artifacts, {
+      ...filter,
+      kind: ["rebate", "drawback", "refund", "drawback-or-refund"]
+    });
   }
 }
 
@@ -285,9 +291,9 @@ async function syncCache(
   if (!validation.valid) {
     throw new Error(`ZA customs cache built an invalid ruleset: ${validation.issues.map((issue) => issue.code).join(", ")}`);
   }
-  await writeFile(paths.artifact, `${JSON.stringify(container, null, 2)}\n`, "utf8");
+  const artifacts = await writeCacheArtifacts(paths, container);
   return {
-    container,
+    artifacts,
     fetched: fetched.map((source) => source.source.id),
     warnings: container.manifest.warnings,
     validation
@@ -296,9 +302,9 @@ async function syncCache(
 
 function syncResult(paths: CachePaths, result: SyncCacheResult): ZaCustomsSyncResult {
   return {
-    rulesetId: result.container.manifest.rulesetId,
+    rulesetId: result.artifacts.manifest.rulesetManifest.rulesetId,
     cacheDir: paths.root,
-    artifactPath: paths.artifact,
+    manifestPath: paths.manifest,
     fetched: result.fetched,
     warnings: result.warnings,
     validation: result.validation
@@ -505,26 +511,8 @@ async function removeCachedSource(sourceDir: string, sourceId: string): Promise<
   }
 }
 
-async function readCachedContainer(path: string): Promise<CustomsRulesetContainerV1 | null> {
-  try {
-    await access(path, constants.R_OK);
-  } catch {
-    return null;
-  }
-  const container = JSON.parse(await readFile(path, "utf8")) as CustomsRulesetContainerV1;
-  const report = validateCustomsRulesetContainer(container);
-  if (!report.valid) throw new Error(`${path} is not a valid ZA customs ruleset: ${report.issues.map((issue) => issue.code).join(", ")}`);
-  return container;
-}
-
 function cachePaths(cacheDir: string | undefined): CachePaths {
-  const root = cacheDir ?? defaultCacheDir();
-  return {
-    root,
-    sources: join(root, "sources"),
-    tmp: join(root, "tmp"),
-    artifact: join(root, ARTIFACT_FILE)
-  };
+  return zaCustomsCachePaths(cacheDir ?? defaultCacheDir());
 }
 
 function defaultCacheDir(): string {
@@ -538,19 +526,26 @@ function defaultCacheDir(): string {
   return join(base, "openschedule", "za-customs");
 }
 
-function containerAsSchedule1Ruleset(container: CustomsRulesetContainerV1): CustomsRulesetV1 {
+function artifactAsSchedule1Ruleset(artifacts: ZaCustomsCacheArtifacts, tariffLines: TariffLineV1[]): CustomsRulesetV1 {
   return {
     schemaVersion: "za-customs.customs-ruleset.v1",
-    manifest: container.manifest,
-    parseMetrics: container.schedule1Part1.metrics,
-    pageMetrics: container.schedule1Part1.pageMetrics,
-    tariffLines: container.schedule1Part1.tariffLines
+    manifest: artifacts.manifest.rulesetManifest,
+    parseMetrics: {
+      pagesParsed: 0,
+      textItems: 0,
+      layoutRows: 0,
+      candidateRows: tariffLines.length,
+      contextRows: 0,
+      tariffLines: tariffLines.length,
+      rejectedRows: 0
+    },
+    tariffLines
   };
 }
 
 function consumerLine(
   line: TariffLineV1,
-  container: CustomsRulesetContainerV1,
+  manifest: RulesetManifestV1,
   options: ZaCustomsMetadataOptions
 ): ZaCustomsTariffLine {
   return {
@@ -566,7 +561,7 @@ function consumerLine(
       ? {
           metadata: {
             sourceTrace: line.sourceTrace,
-            sourceDocuments: sourceDocumentsForTrace(line.sourceTrace, container),
+            sourceDocuments: sourceDocumentsForTrace(line.sourceTrace, manifest),
             confidence: line.parseConfidence,
             warnings: line.warnings
           }
@@ -622,15 +617,15 @@ function consumerEstimate(estimate: CustomsDutyEstimateV1, options: ZaCustomsMet
 
 function sourceDocumentsForTrace(
   trace: readonly SourceTraceV1[],
-  container: CustomsRulesetContainerV1
+  manifest: RulesetManifestV1
 ): SourceDocumentMetadataV1[] {
   const hashes = new Set(trace.map((item) => item.sourceDocumentSha256));
-  return container.manifest.sourceDocuments.filter((document) => hashes.has(document.sha256));
+  return manifest.sourceDocuments.filter((document) => hashes.has(document.sha256));
 }
 
-function defaultEffectiveDate(value: ZaCustomsEffectiveDate, container: CustomsRulesetContainerV1): string {
+function defaultEffectiveDate(value: ZaCustomsEffectiveDate, artifacts: ZaCustomsCacheArtifacts): string {
   if (value !== "latest") return dateOption(value);
-  return container.manifest.effectiveDate ?? new Date().toISOString().slice(0, 10);
+  return artifacts.manifest.resolvedEffectiveDate;
 }
 
 function dateOption(value: string): string {
@@ -645,4 +640,21 @@ function emit(
   message: string
 ): void {
   options.logger?.({ level, code, message });
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validCacheReport(): ValidationReportV1 {
+  return {
+    schemaVersion: "core.validation-report.v1",
+    valid: true,
+    issues: []
+  };
 }

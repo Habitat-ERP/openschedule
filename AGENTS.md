@@ -12,7 +12,7 @@ OpenSchedule builds local, auditable statutory rulesets from official source doc
 
 ## Hard Rules
 
-- Do not commit official SARS PDFs, fetched source caches, generated `za-customs.json`, or shared SARS-derived data packages.
+- Do not commit official SARS PDFs, fetched source caches, generated ZA customs cache artifacts, or shared SARS-derived data packages.
 - Keep examples synthetic unless the user explicitly provides source data and asks to use it.
 - Duty estimates are mechanical calculations from resolvable rates, not customs classification, brokerage, or legal advice.
 - Prefer the public `@openschedule/za-customs` API for consumers. Use `@openschedule/za-customs/internal` only for parser, fixture, CLI, MCP, or maintenance work.

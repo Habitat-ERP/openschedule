@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { ZA_CUSTOMS_MANIFEST_FILE, writeCacheArtifacts, zaCustomsCachePaths } from "../../za-customs/dist/src/cache-artifacts.js";
 import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
 import { syntheticSchedulePdf } from "../../za-customs/test/synthetic-schedule-pdf.mjs";
 import PackageJson from "../package.json" with { type: "json" };
@@ -119,7 +120,7 @@ async function writeRuleset(dir, name, value) {
 }
 
 async function writeCustomsCache(dir, value) {
-  await writeFile(join(dir, "za-customs.json"), `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  await writeCacheArtifacts(zaCustomsCachePaths(dir), value);
 }
 
 test("initializes and lists tools/resources", async () => {
@@ -261,6 +262,8 @@ test("wraps consumer ZA customs cache tools", async () => {
     const source = await toolCall("za_customs_source", { ...base, tariffCode: "0001.10" });
 
     assert.equal(structured(sync).validation.valid, true);
+    assert.ok(structured(sync).manifestPath.endsWith(ZA_CUSTOMS_MANIFEST_FILE));
+    assert.equal(structured(sync).artifactPath, undefined);
     assert.equal(structured(lookup).tariffCode, "0001.10");
     assert.equal(structured(lookup).metadata, undefined);
     assert.equal(structured(richLookup).metadata.warnings[0], "fixture line warning");

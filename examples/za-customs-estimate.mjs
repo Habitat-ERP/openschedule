@@ -1,8 +1,9 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createZaCustoms } from "@openschedule/za-customs";
 import { buildCustomsRulesetContainer } from "@openschedule/za-customs/internal";
+import { writeCacheArtifacts, zaCustomsCachePaths } from "../packages/za-customs/dist/src/cache-artifacts.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
 const sourceTrace = {
@@ -78,7 +79,7 @@ function syntheticRuleset() {
 const cacheDir = await mkdtemp(join(tmpdir(), "openschedule-za-customs-example-"));
 
 try {
-  await writeFile(join(cacheDir, "za-customs.json"), `${JSON.stringify(syntheticRuleset(), null, 2)}\n`);
+  await writeCacheArtifacts(zaCustomsCachePaths(cacheDir), syntheticRuleset());
 
   const customs = await createZaCustoms({ cacheDir, sync: "never" });
   const successful = customs.estimate({

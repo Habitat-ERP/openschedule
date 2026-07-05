@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { ZA_CUSTOMS_MANIFEST_FILE, writeCacheArtifacts, zaCustomsCachePaths } from "../../za-customs/dist/src/cache-artifacts.js";
 import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
 import { syntheticSchedulePdf } from "../../za-customs/test/synthetic-schedule-pdf.mjs";
 import { runCli } from "../dist/src/index.js";
@@ -121,7 +122,7 @@ async function writeRuleset(dir, name, value) {
 }
 
 async function writeCustomsCache(dir, value) {
-  await writeFile(join(dir, "za-customs.json"), `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  await writeCacheArtifacts(zaCustomsCachePaths(dir), value);
 }
 
 test("discovers SARS customs sources as JSON", async () => {
@@ -249,6 +250,8 @@ test("runs consumer customs commands from the managed cache", async () => {
     const source = await invoke(["customs", "source", ...base, "--tariff-code", "0001.10"]);
 
     assert.equal(sync.exitCode, 0);
+    assert.ok(sync.json.manifestPath.endsWith(ZA_CUSTOMS_MANIFEST_FILE));
+    assert.equal(sync.json.artifactPath, undefined);
     assert.equal(sync.json.validation.valid, true);
     assert.equal(lookup.exitCode, 0);
     assert.equal(lookup.json.tariffCode, "0001.10");

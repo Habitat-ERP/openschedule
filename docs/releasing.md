@@ -35,7 +35,7 @@ You can still create a changeset manually with `npm run changeset`.
 
 If someone pushes straight to `main`, the `Changeset` workflow adds the missing changeset in a follow-up commit. Prefer branch protection so normal work still goes through PR review.
 
-Do not publish SARS PDFs, fetched caches, generated `za-customs.json`, or SARS-derived datasets.
+Do not publish SARS PDFs, fetched caches, generated ZA customs cache artifacts, or SARS-derived datasets.
 
 ## Main branch protection
 

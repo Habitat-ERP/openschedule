@@ -11,6 +11,11 @@ coverage/
 sources/
 rulesets/
 tmp/
+za-customs.json
+za-customs.manifest.json
+tariff-lines.ndjson
+tariff-lines.idx.json
+measures.ndjson
 
 # Local agent/session tooling
 .agents/

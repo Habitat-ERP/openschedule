@@ -2,7 +2,7 @@
 
 South African customs duty lookups and estimates for TypeScript apps.
 
-`@openschedule/za-customs` downloads official SARS customs schedule PDFs into your cache, converts them into a local `za-customs.json` file, and lets your app look up tariff lines, rates, duty estimates, source references, duties, trade remedies, rebates, drawbacks, and refunds.
+`@openschedule/za-customs` downloads official SARS customs schedule PDFs into your cache, builds indexed local cache artifacts, and lets your app look up tariff lines, rates, duty estimates, source references, duties, trade remedies, rebates, drawbacks, and refunds.
 
 ```bash
 npm install @openschedule/za-customs
@@ -32,9 +32,9 @@ Other env-gated parser tests follow the same `OPENSCHEDULE_SARS_*_PDF_PATH` patt
 
 Why it works this way:
 
-- **Runs locally after sync:** once `za-customs.json` exists, lookups and estimates do not need internet access or a hosted tariff API.
+- **Runs locally after sync:** once the managed cache exists, lookups and estimates do not need internet access or a hosted tariff API.
 - **Easy to audit:** `includeMetadata: true` and `source()` show parser warnings, SARS PDF page references, and document hashes.
-- **Typed for app developers:** TypeScript types and JSON schemas describe tariff lines, rates, estimates, source references, validation results, and the local data file.
+- **Typed for app developers:** TypeScript types and JSON schemas describe tariff lines, rates, estimates, source references, and validation results.
 - **Tested without copying SARS data:** `npm test` includes 50 synthetic duty examples covering ad valorem, specific, compound, preferential/free, and unresolved fallback cases.
 - **Flags incomplete parses:** validation warns when a parse produced too few lines, reported parser warnings, or has mismatched counts.
 
@@ -42,8 +42,8 @@ Why it works this way:
 flowchart LR
   sars["Official SARS schedule PDFs"] --> sync["Your app downloads supported sources"]
   sync --> cache["Your local cache<br/>PDFs + download metadata"]
-  cache --> build["OpenSchedule builds<br/>za-customs.json"]
-  build --> runtime["Your app reads<br/>local JSON"]
+  cache --> build["OpenSchedule builds<br/>indexed cache artifacts"]
+  build --> runtime["Your app reads<br/>the local cache"]
   runtime --> output["Lookup and estimate results"]
   runtime --> audit["Optional audit details<br/>PDF page + SHA-256 + warnings"]
 

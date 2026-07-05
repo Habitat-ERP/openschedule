@@ -2,7 +2,7 @@
 
 OpenSchedule is a TypeScript toolkit for using South African customs tariff data in software.
 
-It downloads official SARS customs schedule PDFs into your own cache, converts them into a local JSON file, and lets your app look up tariff lines, rates, and duty estimates without calling a hosted API.
+It downloads official SARS customs schedule PDFs into your own cache, builds indexed local cache artifacts, and lets your app look up tariff lines, rates, and duty estimates without calling a hosted API.
 
 Every result can include source references back to the SARS PDFs, so teams can audit what the calculation used.
 
@@ -13,7 +13,7 @@ OpenSchedule is not calendar software, a static tariff dump, or a hosted import 
 | If you need | Common route | OpenSchedule route |
 | --- | --- | --- |
 | Old reference data | Static snapshots you still have to normalize and load | Build a local ruleset from supported official SARS PDFs fetched into your cache |
-| One-off duty checks | Hosted calculators or proprietary APIs | Query your own `za-customs.json` through TypeScript, CLI, or MCP |
+| One-off duty checks | Hosted calculators or proprietary APIs | Query your own managed cache through TypeScript, CLI, or MCP |
 | Audit evidence | A flat result with limited provenance | Optional metadata with parser warnings, SARS PDF pages, and document hashes |
 | More than ordinary duties | Tools focused on simple percentage rates | Duties, trade remedies, rebates, drawbacks, refunds, and mechanical estimates when rates are resolvable |
 
@@ -24,19 +24,19 @@ OpenSchedule is not calendar software, a static tariff dump, or a hosted import 
 It helps your app:
 
 - download supported SARS customs schedule PDFs into your own cache
-- build a local `za-customs.json` file from those PDFs
+- build indexed local cache artifacts from those PDFs
 - look up tariff codes, descriptions, and available rate columns
 - estimate duties when the rate text is clear enough to calculate
 - list duties, trade remedies, rebates, drawbacks, and refunds
 - show the SARS PDF page and file hash behind a result when you ask for audit details
 
-OpenSchedule does not ship SARS PDFs, SARS datasets, or a prebuilt customs database. Each user fetches SARS sources into their own environment and builds their own local data file.
+OpenSchedule does not ship SARS PDFs, SARS datasets, or a prebuilt customs database. Each user fetches SARS sources into their own environment and builds their own local cache.
 
 Why it works this way:
 
-- **Runs locally after sync:** once `za-customs.json` exists, lookups and estimates do not need internet access or a hosted tariff API.
+- **Runs locally after sync:** once the managed cache exists, lookups and estimates do not need internet access or a hosted tariff API.
 - **Easy to audit:** `includeMetadata: true` and `source()` show parser warnings, SARS PDF page references, and document hashes.
-- **Typed for app developers:** TypeScript types and JSON schemas describe tariff lines, rates, estimates, source references, validation results, and the local data file.
+- **Typed for app developers:** TypeScript types and JSON schemas describe tariff lines, rates, estimates, source references, and validation results.
 - **Tested without copying SARS data:** `npm test` includes 50 synthetic duty examples covering ad valorem, specific, compound, preferential/free, and unresolved fallback cases.
 - **Flags incomplete parses:** validation warns when a parse produced too few lines, reported parser warnings, or has mismatched counts.
 
@@ -44,8 +44,8 @@ Why it works this way:
 flowchart LR
   sars["Official SARS schedule PDFs"] --> sync["Your app downloads supported sources"]
   sync --> cache["Your local cache<br/>PDFs + download metadata"]
-  cache --> build["OpenSchedule builds<br/>za-customs.json"]
-  build --> runtime["Your app reads<br/>local JSON"]
+  cache --> build["OpenSchedule builds<br/>indexed cache artifacts"]
+  build --> runtime["Your app reads<br/>the local cache"]
   runtime --> output["Lookup and estimate results"]
   runtime --> audit["Optional audit details<br/>PDF page + SHA-256 + warnings"]
 
@@ -210,7 +210,7 @@ Copyable examples live in `examples/`. Run `node examples/za-customs-estimate.mj
 
 ## Sources And Cache
 
-The managed cache stores fetched source documents, source metadata, and the generated `za-customs.json` ruleset. By default it lives under the platform cache directory, or under `OPENSCHEDULE_CACHE_DIR` when that environment variable is set. You can override it with `cacheDir` or `--cache`.
+The managed cache stores fetched source documents, source metadata, and generated indexed customs artifacts: a manifest, tariff-line NDJSON, a tariff-line byte index, and measure NDJSON. By default it lives under the platform cache directory, or under `OPENSCHEDULE_CACHE_DIR` when that environment variable is set. You can override it with `cacheDir` or `--cache`.
 
 Sync modes:
 
