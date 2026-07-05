@@ -2,6 +2,16 @@
   "name": "@openschedule/cli",
   "version": "0.1.0",
   "description": "Command-line tools for OpenSchedule statutory rulesets.",
+  "keywords": [
+    "openschedule",
+    "south-africa",
+    "customs",
+    "sars",
+    "tariff",
+    "hs-code",
+    "customs-duty",
+    "cli"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "repository": {

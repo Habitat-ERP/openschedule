@@ -2,6 +2,16 @@
   "name": "@openschedule/za-sars",
   "version": "0.1.0",
   "description": "SARS customs source discovery, status checks, and fetch helpers for OpenSchedule.",
+  "keywords": [
+    "south-africa",
+    "sars",
+    "customs",
+    "tariff",
+    "source-status",
+    "source-discovery",
+    "provenance",
+    "ruleset"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "repository": {

@@ -1,8 +1,8 @@
 # OpenSchedule
 
-OpenSchedule turns official statutory source documents into local, versioned, auditable rulesets. It is infrastructure for developers who need repeatable statutory data without depending on a hosted API or hidden parser state.
+OpenSchedule turns official statutory source documents into local, versioned, auditable rulesets. It is infrastructure for developers who need repeatable statutory data without depending on a hosted API, hidden parser state, or bundled third-party data.
 
-The current consumer surface is South African customs.
+The current consumer surface is South African customs from official SARS customs schedule sources.
 
 ## ZA Customs
 
@@ -14,7 +14,9 @@ The current consumer surface is South African customs.
 - duties, trade remedies, rebates, drawbacks, and refunds across customs schedules
 - light default responses, with parser/source metadata available only when requested
 
-Examples below use synthetic tariff codes and values.
+OpenSchedule does not publish or bundle SARS PDFs, SARS datasets, or shared generated customs rulesets. Consumers fetch supported official SARS sources into their own local cache, then build an auditable `za-customs.json` ruleset locally.
+
+Examples below use synthetic tariff codes and values so the README does not copy official SARS tariff content.
 
 ## TypeScript
 
@@ -175,9 +177,31 @@ Sync modes:
 - `if-stale` checks declared sources and fetches missing or changed sources.
 - `always` refetches supported sources.
 
-OpenSchedule does not redistribute official SARS PDFs or official datasets. Users are responsible for verifying source-document rights, cache contents, and any legal reliance on generated outputs.
+For production use, prefer `sync: "if-stale"` or an explicit `openschedule customs sync --sync if-stale` step in your own release process. The local ruleset manifest records source document hashes, source identifiers, retrieval metadata, parser package version, and warnings.
 
-## Limits
+Source status checks are available when you need a freshness report:
+
+```bash
+openschedule status za-sars customs --cache <cache>/sources
+```
+
+MCP users can call `check_source_status` with the same fetched-source cache directory.
+
+OpenSchedule does not redistribute official SARS PDFs, official SARS datasets, or generated shared customs data. Users are responsible for verifying source-document rights, cache contents, and any legal reliance on generated outputs.
+
+## Source Coverage
+
+| Source family | Fetched | Parsed | Notes |
+| --- | --- | --- | --- |
+| Schedule 1 Part 1 ordinary customs duty | Yes | Yes | Tariff-line lookup, rate columns, estimates, and provenance. |
+| Schedule 1 excise and levy parts | Yes | Yes | Row-bearing parts are parsed; notes-only PDFs are retained as sources. |
+| Schedule 2 trade remedies | Yes | Yes | Anti-dumping, countervailing, and safeguard duty rows. |
+| Schedules 3 to 6 reliefs | Yes | Yes | Rebates, drawbacks, refunds, and excise rebate/refund rows. |
+| Tariff amendment registries | Declared | Manual review | HTML registry pages are tracked as source descriptors; notice-level parsing is not implemented yet. |
+
+See [SARS customs source coverage](docs/za-sars-source-coverage.md) for the detailed source list and exclusions.
+
+## Production Readiness And Legal Reliance
 
 OpenSchedule is not a customs broker, classification engine, legal opinion, or hosted tariff API. It does not decide what goods are, whether a rebate applies to a transaction, or whether an official source has legal effect for your use case.
 

@@ -2,6 +2,16 @@
   "name": "@openschedule/za-customs",
   "version": "0.1.0",
   "description": "Consumer API and ruleset tooling for South African customs schedules.",
+  "keywords": [
+    "south-africa",
+    "customs",
+    "sars",
+    "tariff",
+    "hs-code",
+    "customs-duty",
+    "ruleset",
+    "provenance"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "repository": {

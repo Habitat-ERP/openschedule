@@ -2,6 +2,16 @@
   "name": "@openschedule/mcp",
   "version": "0.1.0",
   "description": "MCP server for OpenSchedule statutory ruleset tools.",
+  "keywords": [
+    "openschedule",
+    "mcp",
+    "south-africa",
+    "customs",
+    "sars",
+    "tariff",
+    "hs-code",
+    "ruleset"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "repository": {
