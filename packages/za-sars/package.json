@@ -1,6 +1,6 @@
 {
   "name": "@openschedule/za-sars",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official SARS customs source discovery, status checks, and local fetch helpers for OpenSchedule.",
   "keywords": [
     "south africa revenue service customs",
@@ -46,6 +46,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@openschedule/core": "0.1.0"
+    "@openschedule/core": "0.1.1"
   }
 }

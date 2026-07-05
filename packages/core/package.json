@@ -1,6 +1,6 @@
 {
   "name": "@openschedule/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deterministic TypeScript types, JSON Schemas, source traces, validation reports, and diff contracts for OpenSchedule statutory rulesets.",
   "keywords": [
     "openschedule",
