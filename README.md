@@ -6,6 +6,17 @@ It downloads official SARS customs schedule PDFs into your own cache, converts t
 
 Every result can include source references back to the SARS PDFs, so teams can audit what the calculation used.
 
+## Where It Fits
+
+OpenSchedule is not calendar software, a static tariff dump, or a hosted import calculator. It is for teams that need local, typed, auditable SARS customs data in their own software.
+
+| If you need | Common route | OpenSchedule route |
+| --- | --- | --- |
+| Old reference data | Static snapshots you still have to normalize and load | Build a local ruleset from supported official SARS PDFs fetched into your cache |
+| One-off duty checks | Hosted calculators or proprietary APIs | Query your own `za-customs.json` through TypeScript, CLI, or MCP |
+| Audit evidence | A flat result with limited provenance | Optional metadata with parser warnings, SARS PDF pages, and document hashes |
+| More than ordinary duties | Tools focused on simple percentage rates | Duties, trade remedies, rebates, drawbacks, refunds, and mechanical estimates when rates are resolvable |
+
 ## ZA Customs
 
 `@openschedule/za-customs` is the package for South African customs duty work.

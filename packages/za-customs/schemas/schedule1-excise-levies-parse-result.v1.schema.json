@@ -182,7 +182,7 @@
         "components": {
           "type": "array",
           "items": {
-            "type": "object"
+            "$ref": "#/$defs/dutyRateComponent"
           }
         },
         "warnings": {
@@ -190,6 +190,40 @@
           "items": { "type": "string" }
         }
       }
+    },
+    "dutyRateComponent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basis", "rate"],
+          "properties": {
+            "basis": { "const": "customs_value" },
+            "rate": { "type": "number" },
+            "qualifier": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount", "currency", "perQuantity", "unit"],
+          "properties": {
+            "amount": { "type": "number" },
+            "currency": { "enum": ["ZAR", "ZAc"] },
+            "perQuantity": { "type": "number", "exclusiveMinimum": 0 },
+            "unit": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basis", "qualifier"],
+          "properties": {
+            "basis": { "const": "qualified_free" },
+            "qualifier": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
     }
   }
 }

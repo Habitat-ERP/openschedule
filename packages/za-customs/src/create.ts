@@ -155,6 +155,13 @@ interface LocalSource {
   source: SarsCustomsSourceV1 | null;
 }
 
+interface SyncCacheResult {
+  container: CustomsRulesetContainerV1;
+  fetched: string[];
+  warnings: string[];
+  validation: ValidationReportV1;
+}
+
 const ARTIFACT_FILE = "za-customs.json";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -168,22 +175,25 @@ export async function createZaCustoms(options: CreateZaCustomsOptions = {}): Pro
   await mkdir(paths.tmp, { recursive: true });
 
   let container = await readCachedContainer(paths.artifact);
+  let initialSyncResult: ZaCustomsSyncResult | undefined;
   if (mode === "always" || mode === "if-stale" || !container) {
     const result = await syncCache(paths, mode, runtime);
     container = result.container;
+    initialSyncResult = syncResult(paths, result);
   }
   if (!container) {
     container = await buildFromCache(paths, runtime);
   }
 
-  return new CachedZaCustoms(paths, runtime, container);
+  return new CachedZaCustoms(paths, runtime, container, initialSyncResult);
 }
 
 class CachedZaCustoms implements ZaCustoms {
   constructor(
     private readonly paths: CachePaths,
     private readonly options: CreateZaCustomsOptions & { effectiveDate: ZaCustomsEffectiveDate },
-    private container: CustomsRulesetContainerV1
+    private container: CustomsRulesetContainerV1,
+    private initialSyncResult?: ZaCustomsSyncResult
   ) {}
 
   get rulesetId(): string {
@@ -193,6 +203,11 @@ class CachedZaCustoms implements ZaCustoms {
   async sync(options: { mode?: ZaCustomsSyncMode; effectiveDate?: ZaCustomsEffectiveDate } = {}): Promise<ZaCustomsSyncResult> {
     const mode = options.mode ?? "always";
     if (mode === "never") {
+      if (this.initialSyncResult) {
+        const result = this.initialSyncResult;
+        this.initialSyncResult = undefined;
+        return result;
+      }
       const validation = validateCustomsRulesetContainer(this.container);
       if (!validation.valid) {
         throw new Error(`ZA customs cache contains an invalid ruleset: ${validation.issues.map((issue) => issue.code).join(", ")}`);
@@ -212,14 +227,8 @@ class CachedZaCustoms implements ZaCustoms {
       effectiveDate: options.effectiveDate ?? this.options.effectiveDate
     });
     this.container = result.container;
-    return {
-      rulesetId: result.container.manifest.rulesetId,
-      cacheDir: this.paths.root,
-      artifactPath: this.paths.artifact,
-      fetched: result.fetched,
-      warnings: result.warnings,
-      validation: result.validation
-    };
+    this.initialSyncResult = undefined;
+    return syncResult(this.paths, result);
   }
 
   lookup(tariffCode: string, options: ZaCustomsMetadataOptions = {}): ZaCustomsTariffLine | null {
@@ -265,12 +274,7 @@ async function syncCache(
   paths: CachePaths,
   mode: ZaCustomsSyncMode,
   options: CreateZaCustomsOptions & { effectiveDate: ZaCustomsEffectiveDate }
-): Promise<{
-  container: CustomsRulesetContainerV1;
-  fetched: string[];
-  warnings: string[];
-  validation: ValidationReportV1;
-}> {
+): Promise<SyncCacheResult> {
   const sources = discoverCustomsSources().filter((source) => source.sourceFormat === "application/pdf");
   const staleSources = await sourcesToFetch(paths, sources, mode, options.fetch);
   if (staleSources.length) emit(options, "info", "sources_fetch", `Fetching ${staleSources.length} SARS customs source document(s).`);
@@ -287,6 +291,17 @@ async function syncCache(
     fetched: fetched.map((source) => source.source.id),
     warnings: container.manifest.warnings,
     validation
+  };
+}
+
+function syncResult(paths: CachePaths, result: SyncCacheResult): ZaCustomsSyncResult {
+  return {
+    rulesetId: result.container.manifest.rulesetId,
+    cacheDir: paths.root,
+    artifactPath: paths.artifact,
+    fetched: result.fetched,
+    warnings: result.warnings,
+    validation: result.validation
   };
 }
 

@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - run: npm ci
+      - run: npm test
+      - run: git diff --check
+      - run: npm --cache /tmp/openschedule-npm-cache pack --workspaces --dry-run --json > /tmp/openschedule-pack.json
+      - run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const packs = JSON.parse(await readFile("/tmp/openschedule-pack.json", "utf8"));
+          const forbidden = [/\.pdf$/i, /(^|\/)za-customs\.json$/i, /(^|\/)(cache|sources|tmp)(\/|$)/i];
+          const bad = packs.flatMap((pack) =>
+            pack.files
+              .map((file) => `${pack.name}:${file.path}`)
+              .filter((path) => forbidden.some((pattern) => pattern.test(path)))
+          );
+          if (bad.length) {
+            console.error(`Forbidden package entries:\n${bad.join("\n")}`);
+            process.exit(1);
+          }
+          NODE
+
+      - uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release
+          title: Version Packages
+          commit: Version Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

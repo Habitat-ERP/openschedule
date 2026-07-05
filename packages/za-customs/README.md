@@ -22,6 +22,14 @@ const estimate = customs.estimate({
 
 Sync modes are `never`, `if-missing`, `if-stale`, and `always`. Production apps should normally use `if-stale` in their own environment.
 
+Live SARS parser smoke tests are opt-in and use local PDF paths, for example:
+
+```bash
+OPENSCHEDULE_SARS_PDF_PATH=/path/to/schedule-1-part-1.pdf npm test
+```
+
+Other env-gated parser tests follow the same `OPENSCHEDULE_SARS_*_PDF_PATH` pattern and are skipped when unset.
+
 Why it works this way:
 
 - **Runs locally after sync:** once `za-customs.json` exists, lookups and estimates do not need internet access or a hosted tariff API.

@@ -142,13 +142,16 @@ function estimateResult(
 }
 
 function isAdValoremComponent(component: DutyRateComponentV1): component is DutyRateComponentV1 & { rate: number } {
-  return component.basis === "customs_value" && typeof component.rate === "number";
+  return "basis" in component && component.basis === "customs_value" && "rate" in component && typeof component.rate === "number";
 }
 
 function isSpecificComponent(
   component: DutyRateComponentV1
 ): component is DutyRateComponentV1 & { amount: number; perQuantity: number; unit: string } {
   return (
+    "amount" in component &&
+    "perQuantity" in component &&
+    "unit" in component &&
     typeof component.amount === "number" &&
     typeof component.perQuantity === "number" &&
     typeof component.unit === "string"

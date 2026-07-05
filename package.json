@@ -3,15 +3,24 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.14.0"
+  },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "tsc -b",
+    "changeset": "changeset",
+    "changeset:auto": "node scripts/ensure-changeset.mjs",
+    "changeset:check": "changeset status --since=origin/main",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.test.json --pretty false",
     "test": "npm run typecheck && node --test packages/*/test/*.test.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/node": "^26.1.0",
     "typescript": "^5.8.3"
   }

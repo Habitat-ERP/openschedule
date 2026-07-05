@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
+import { syntheticSchedulePdf } from "../../za-customs/test/synthetic-schedule-pdf.mjs";
 import { runCli } from "../dist/src/index.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
@@ -260,6 +261,25 @@ test("runs consumer customs commands from the managed cache", async () => {
     assert.equal("sourceTrace" in estimate.json, false);
     assert.equal(measures.json.items[0].metadata, undefined);
     assert.equal(source.json[0].document.fileName, "schedule.pdf");
+  });
+});
+
+test("customs sync reports source IDs fetched during client construction", async () => {
+  await withTempDir(async (dir) => {
+    const pdf = syntheticSchedulePdf();
+    const fetch = async () =>
+      new Response(pdf, {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf"
+        }
+      });
+
+    const sync = await invoke(["customs", "sync", "--cache", dir, "--sync", "if-missing"], { fetch });
+
+    assert.equal(sync.exitCode, 0);
+    assert.ok(sync.json.fetched.includes("ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1"));
+    assert.equal(sync.json.validation.valid, true);
   });
 });
 

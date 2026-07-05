@@ -50,6 +50,7 @@ import {
   type CustomsRateColumnV1,
   type CustomsRulesetV1
 } from "@openschedule/za-customs/internal";
+import PackageJson from "../package.json" with { type: "json" };
 
 type JsonRpcId = string | number | null;
 type JsonObject = Record<string, unknown>;
@@ -312,7 +313,7 @@ export async function handleMcpRequest(request: McpRequest, runtime: McpRuntime 
           },
           serverInfo: {
             name: "openschedule",
-            version: "0.0.0"
+            version: PackageJson.version
           }
         });
       case "notifications/initialized":

@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { buildCustomsRuleset, buildCustomsRulesetContainer } from "../../za-customs/dist/src/internal.js";
+import { syntheticSchedulePdf } from "../../za-customs/test/synthetic-schedule-pdf.mjs";
+import PackageJson from "../package.json" with { type: "json" };
 import { handleMcpRequest } from "../dist/src/index.js";
 
 const sourceDocumentSha256 = "0".repeat(64);
@@ -126,6 +128,7 @@ test("initializes and lists tools/resources", async () => {
   const resources = await request("resources/list");
 
   assert.equal(initialized.result.protocolVersion, "2025-06-18");
+  assert.equal(initialized.result.serverInfo.version, PackageJson.version);
   assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_lookup"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_rates"));
   assert.ok(tools.result.tools.some((tool) => tool.name === "za_customs_estimate"));
@@ -268,6 +271,25 @@ test("wraps consumer ZA customs cache tools", async () => {
     assert.equal("sourceTrace" in structured(estimate), false);
     assert.equal(structured(measures).items[0].metadata, undefined);
     assert.equal(structured(source)[0].document.fileName, "schedule.pdf");
+  });
+});
+
+test("za_customs_sync reports source IDs fetched during client construction", async () => {
+  await withTempDir(async (dir) => {
+    const pdf = syntheticSchedulePdf();
+    const fetch = async () =>
+      new Response(pdf, {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf"
+        }
+      });
+
+    const sync = await toolCall("za_customs_sync", { cacheDir: dir, sync: "if-missing" }, { fetch });
+
+    assert.equal(sync.error, undefined);
+    assert.ok(structured(sync).fetched.includes("ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1"));
+    assert.equal(structured(sync).validation.valid, true);
   });
 });
 

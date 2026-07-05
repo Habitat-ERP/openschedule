@@ -1,5 +1,6 @@
 import {
   CUSTOMS_RATE_COLUMNS,
+  type DutyRateComponentV1,
   type DutyRateV1,
   type Schedule1ParsePageMetricsV1,
   type Schedule1ParseResultV1,
@@ -487,15 +488,15 @@ function parseDutyRate(raw: string, warnings: string[], column: string): DutyRat
   return { raw: normalized, kind, components: [], warnings: rateWarnings };
 }
 
-function parseAdValoremComponents(raw: string): Array<Record<string, unknown>> {
-  return Array.from(raw.matchAll(/(\d+(?:[,.]\d+)?)%/g)).map((match) => ({
+function parseAdValoremComponents(raw: string): DutyRateComponentV1[] {
+  return Array.from(raw.matchAll(/(\d+(?:[,.]\d+)?)%/g)).map((match): DutyRateComponentV1 => ({
     basis: "customs_value",
     rate: Number(match[1].replace(",", ".")) / 100
   }));
 }
 
-function parseSpecificComponents(raw: string): Array<Record<string, unknown>> {
-  return Array.from(raw.matchAll(/(\d+(?:[,.]\d+)?)c\/(?:(\d+))?([A-Za-z]+)/g)).map((match) => ({
+function parseSpecificComponents(raw: string): DutyRateComponentV1[] {
+  return Array.from(raw.matchAll(/(\d+(?:[,.]\d+)?)c\/(?:(\d+))?([A-Za-z]+)/g)).map((match): DutyRateComponentV1 => ({
     amount: Number(match[1].replace(",", ".")),
     currency: "ZAc",
     perQuantity: match[2] ? Number(match[2]) : 1,

@@ -10,9 +10,28 @@ export type DutyRateKindV1 =
   | "formula"
   | "unknown";
 
-export interface DutyRateComponentV1 {
-  [key: string]: unknown;
+export interface DutyRateAdValoremComponentV1 {
+  basis: "customs_value";
+  rate: number;
+  qualifier?: string;
 }
+
+export interface DutyRateSpecificComponentV1 {
+  amount: number;
+  currency: "ZAR" | "ZAc";
+  perQuantity: number;
+  unit: string;
+}
+
+export interface DutyRateQualifiedFreeComponentV1 {
+  basis: "qualified_free";
+  qualifier: string;
+}
+
+export type DutyRateComponentV1 =
+  | DutyRateAdValoremComponentV1
+  | DutyRateSpecificComponentV1
+  | DutyRateQualifiedFreeComponentV1;
 
 export interface DutyRateV1 {
   raw: string;

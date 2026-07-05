@@ -61,6 +61,9 @@ test("tariff line contract keeps audit fields required", () => {
   assert.ok(TariffLineV1Schema.required.includes("parseConfidence"));
   assert.ok(TariffLineV1Schema.properties.rates.required.includes("general"));
   assert.ok(TariffLineV1Schema.properties.rates.properties.general.$ref);
+  assert.equal(TariffLineV1Schema.$defs.dutyRate.properties.components.items.$ref, "#/$defs/dutyRateComponent");
+  assert.equal(TariffLineV1Schema.$defs.dutyRateComponent.oneOf[0].properties.basis.const, "customs_value");
+  assert.equal(TariffLineV1Schema.$defs.dutyRateComponent.oneOf[1].properties.currency.enum[0], "ZAR");
 });
 
 test("customs ruleset contract keeps parser metrics", () => {

@@ -376,12 +376,6 @@ function isEffective(measure: InternalZaCustomsMeasure, effectiveDate: string): 
   return true;
 }
 
-function cursorOffset(cursor: string | undefined): number {
-  if (!cursor) return 0;
-  const value = Number(cursor);
-  return Number.isInteger(value) && value >= 0 ? value : 0;
-}
-
 function normalize(value: string): string {
   return value.replace(/\D/g, "");
 }

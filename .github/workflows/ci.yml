@@ -9,11 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run changeset:check
+        if: github.event_name == 'pull_request' && github.event.pull_request.title != 'Version Packages'
       - run: npm test
       - run: git diff --check
       - run: npm --cache /tmp/openschedule-npm-cache pack --workspaces --dry-run --json
