@@ -16,6 +16,26 @@ The current consumer surface is South African customs from official SARS customs
 
 OpenSchedule does not publish or bundle SARS PDFs, SARS datasets, or shared generated customs rulesets. Consumers fetch supported official SARS sources into their own local cache, then build an auditable `za-customs.json` ruleset locally.
 
+Why this shape:
+
+- **Local runtime path:** after sync, lookups and mechanical estimates read the local `za-customs.json` ruleset instead of querying a hosted tariff API.
+- **Auditable outputs:** `includeMetadata: true` and `source()` expose parser confidence, warnings, source trace, page locators, and source document SHA-256 hashes.
+- **Typed contracts:** TypeScript types and JSON schemas cover tariff lines, rate components, duty estimates, source metadata, validation reports, and ruleset containers.
+
+```mermaid
+flowchart LR
+  sars["Official SARS schedule sources"] --> sync["Consumer syncs supported sources"]
+  sync --> cache["Consumer-owned local cache<br/>PDFs + source metadata"]
+  cache --> build["OpenSchedule parser builds<br/>za-customs.json"]
+  build --> runtime["Runtime lookups and estimates<br/>read local ruleset"]
+  runtime --> output["Light JSON by default"]
+  runtime --> audit["Optional metadata<br/>sourceTrace + SHA-256 + warnings"]
+
+  cache -. "No shared SARS data distribution" .-> build
+  runtime -. "No hosted API dependency after sync" .-> output
+  audit -. "Verify against official source trail" .-> output
+```
+
 Examples below use synthetic tariff codes and values so the README does not copy official SARS tariff content.
 
 ## TypeScript
@@ -182,10 +202,10 @@ For production use, prefer `sync: "if-stale"` or an explicit `openschedule custo
 Source status checks are available when you need a freshness report:
 
 ```bash
-openschedule status za-sars customs --cache <cache>/sources
+openschedule status za-sars customs --cache <cache>
 ```
 
-MCP users can call `check_source_status` with the same fetched-source cache directory.
+The command accepts either a managed cache root or its `sources` directory. MCP users can call `check_source_status` with the fetched-source cache directory.
 
 OpenSchedule does not redistribute official SARS PDFs, official SARS datasets, or generated shared customs data. Users are responsible for verifying source-document rights, cache contents, and any legal reliance on generated outputs.
 

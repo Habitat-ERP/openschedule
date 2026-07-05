@@ -32,6 +32,7 @@
   "types": "./dist/src/index.d.ts",
   "files": [
     "dist",
+    "!dist/tsconfig.tsbuildinfo",
     "schemas"
   ],
   "scripts": {

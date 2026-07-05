@@ -34,7 +34,8 @@
   },
   "types": "./dist/src/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/tsconfig.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

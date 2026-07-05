@@ -20,7 +20,7 @@ openschedule customs measures --tariff-prefix 0307
 Source freshness checks:
 
 ```bash
-openschedule status za-sars customs --cache <cache>/sources
+openschedule status za-sars customs --cache <cache>
 ```
 
 OpenSchedule builds from official SARS sources fetched into the user's local cache. It does not publish or bundle SARS PDFs, SARS datasets, or shared generated customs rulesets.

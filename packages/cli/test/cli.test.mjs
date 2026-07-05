@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -155,6 +155,29 @@ test("fetches SARS customs source with an injected fetch implementation", async 
     assert.equal(status.exitCode, 0);
     assert.equal(status.json[0].status, "unchanged");
     assert.ok(status.json.some((item) => item.status === "manual-review"));
+  });
+});
+
+test("checks source status from a managed cache root", async () => {
+  await withTempDir(async (dir) => {
+    const cacheDir = join(dir, "cache");
+    const sourceDir = join(cacheDir, "sources");
+    await mkdir(sourceDir, { recursive: true });
+
+    const responseBytes = Buffer.from("%PDF-1.7\nsynthetic\n");
+    const fetch = async () =>
+      new Response(responseBytes, {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf"
+        }
+      });
+
+    await invoke(["fetch", "za-sars", "customs", "--out", sourceDir], { fetch });
+    const status = await invoke(["status", "za-sars", "customs", "--cache", cacheDir], { fetch });
+
+    assert.equal(status.exitCode, 0);
+    assert.equal(status.json[0].status, "unchanged");
   });
 });
 

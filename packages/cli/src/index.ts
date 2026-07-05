@@ -278,7 +278,7 @@ async function runStatus(args: string[], fetcher?: typeof fetch): Promise<unknow
     cache: { type: "string" }
   });
   requirePositionals(positionals, ["za-sars", "customs"], "status za-sars customs --cache <dir>");
-  return checkCustomsSources({ cacheDir: stringOption(values.cache, "--cache"), fetch: fetcher });
+  return checkCustomsSources({ cacheDir: await sourceStatusCacheDir(stringOption(values.cache, "--cache")), fetch: fetcher });
 }
 
 async function runBuild(args: string[]): Promise<CustomsRulesetV1> {
@@ -458,6 +458,16 @@ async function createCustomsClient(values: ParsedValues, fetcher?: typeof fetch)
     effectiveDate: optionalEffectiveDate(values["effective-date"]),
     fetch: fetcher
   });
+}
+
+async function sourceStatusCacheDir(cacheDir: string): Promise<string> {
+  const sourcesDir = join(cacheDir, "sources");
+  try {
+    await access(sourcesDir, constants.R_OK);
+    return sourcesDir;
+  } catch {
+    return cacheDir;
+  }
 }
 
 function metadataOption(values: ParsedValues): { includeMetadata: boolean } {
