@@ -1,6 +1,6 @@
 {
   "name": "@openschedule/za-customs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-cache TypeScript API for South African SARS customs schedule lookup, source trace, and mechanical duty estimates.",
   "keywords": [
     "south african customs tariff lookup",
@@ -51,8 +51,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@openschedule/core": "0.1.0",
-    "@openschedule/za-sars": "0.1.0",
+    "@openschedule/core": "0.1.1",
+    "@openschedule/za-sars": "0.1.1",
     "pdfjs-dist": "^6.1.200"
   }
 }

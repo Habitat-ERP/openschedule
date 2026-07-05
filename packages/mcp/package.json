@@ -1,6 +1,6 @@
 {
   "name": "@openschedule/mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "mcpName": "io.github.habitat-erp/openschedule",
   "description": "MCP server exposing OpenSchedule ZA customs lookup, source trace, schemas, and mechanical duty estimate tools.",
   "keywords": [
@@ -50,8 +50,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@openschedule/core": "0.1.0",
-    "@openschedule/za-customs": "0.1.0",
-    "@openschedule/za-sars": "0.1.0"
+    "@openschedule/core": "0.1.1",
+    "@openschedule/za-customs": "0.1.1",
+    "@openschedule/za-sars": "0.1.1"
   }
 }

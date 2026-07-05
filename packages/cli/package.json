@@ -1,6 +1,6 @@
 {
   "name": "@openschedule/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for OpenSchedule ZA customs sync, tariff lookup, source trace, and mechanical duty estimates.",
   "keywords": [
     "openschedule cli",
@@ -48,8 +48,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@openschedule/core": "0.1.0",
-    "@openschedule/za-customs": "0.1.0",
-    "@openschedule/za-sars": "0.1.0"
+    "@openschedule/core": "0.1.1",
+    "@openschedule/za-customs": "0.1.1",
+    "@openschedule/za-sars": "0.1.1"
   }
 }
