@@ -1,8 +1,18 @@
 {
   "name": "@openschedule/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Core schemas and utilities for OpenSchedule statutory rulesets.",
   "license": "Apache-2.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Habitat-ERP/openschedule.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Habitat-ERP/openschedule#readme",
+  "bugs": {
+    "url": "https://github.com/Habitat-ERP/openschedule/issues"
+  },
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
@@ -18,5 +28,8 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
