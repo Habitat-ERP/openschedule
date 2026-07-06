@@ -1,5 +1,11 @@
 # @openschedule/za-customs
 
+## 0.1.3
+
+### Patch Changes
+
+- c59ddc0: Automated patch changeset for package changes.
+
 ## 0.1.2
 
 ### Patch Changes
