@@ -41,29 +41,33 @@ function tariffLine(overrides = {}) {
     schemaVersion: "za-customs.tariff-line.v1",
     tariffCode,
     normalizedTariffCode: tariffCode.replace(/\D/g, ""),
+    checkDigit: overrides.checkDigit,
     description: overrides.description ?? "Synthetic goods",
     normalizedDescription: overrides.normalizedDescription ?? "Synthetic goods",
-    statisticalUnit: "kg",
+    statisticalUnit: overrides.statisticalUnit ?? "kg",
     rates: {
       general: rate("10%", "ad_valorem", [{ basis: "customs_value", rate: 0.1 }], ["fixture rate warning"]),
       sadc: rate("free", "free")
     },
-    validFrom: "2026-07-01",
+    validFrom: overrides.validFrom ?? "2026-07-01",
+    validTo: overrides.validTo,
+    context: overrides.context,
+    sourcePublishedDate: overrides.sourcePublishedDate,
+    sourceImplementationDate: overrides.sourceImplementationDate,
     sourceTrace: [sourceTrace],
     parseConfidence: 1,
     warnings: ["fixture line warning"]
   };
 }
 
-function container() {
-  const lines = [
+function container(lines = [
     tariffLine(),
     tariffLine({
       tariffCode: "0001.20",
       description: "Second synthetic goods",
       normalizedDescription: "Second synthetic goods"
     })
-  ];
+  ], effectiveDate = "2026-07-05") {
   return buildCustomsRulesetContainer({
     manifest: {
       schemaVersion: "core.ruleset-manifest.v1",
@@ -72,7 +76,7 @@ function container() {
       country: "ZA",
       publisher: "SARS",
       generatedAt: "2026-07-05T00:00:00.000Z",
-      effectiveDate: "latest",
+      effectiveDate,
       sourceDocuments: [sourceDocument],
       parser: { packageName: "@openschedule/za-customs", packageVersion: "0.0.0" },
       warnings: []
@@ -151,6 +155,82 @@ test("createZaCustoms loads cached data and exposes consumer methods", async () 
     assert.equal(customs.duties({ tariffCode: "0001.10" }).items.length, 1);
     assert.equal(customs.reliefs({ tariffCode: "0001.10" }).items.length, 0);
     assert.equal(customs.source("000110")[0].document.sourceIdentifier, "ZA_SARS_CUSTOMS_SCHEDULE_1_PART_1");
+  } finally {
+    await rm(cacheDir, { recursive: true, force: true });
+  }
+});
+
+test("tariffLines enumerates current tariff lines with paging and metadata", async () => {
+  const cacheDir = await mkdtemp(join(tmpdir(), "openschedule-public-api-lines-"));
+  try {
+    await writeCacheArtifacts(zaCustomsCachePaths(cacheDir), container([
+      tariffLine({
+        tariffCode: "0001.20",
+        description: "Second current goods",
+        normalizedDescription: "Second current goods"
+      }),
+      tariffLine({
+        tariffCode: "0001.05",
+        checkDigit: "7",
+        description: "First current goods",
+        normalizedDescription: "First current goods",
+        validFrom: "2026-01-01",
+        context: [{
+          code: "00.01",
+          normalizedCode: "0001",
+          description: "Synthetic chapter",
+          normalizedDescription: "Synthetic chapter",
+          level: 1,
+          sourceTrace: [sourceTrace]
+        }],
+        sourcePublishedDate: "2026-06-15",
+        sourceImplementationDate: "2026-07-01"
+      }),
+      tariffLine({
+        tariffCode: "0001.30",
+        description: "Future goods",
+        normalizedDescription: "Future goods",
+        validFrom: "2026-08-01"
+      }),
+      tariffLine({
+        tariffCode: "0001.40",
+        description: "Expired goods",
+        normalizedDescription: "Expired goods",
+        validFrom: "2026-01-01",
+        validTo: "2026-06-30"
+      })
+    ]));
+
+    const customs = await createZaCustoms({ cacheDir, sync: "never" });
+    const firstPage = customs.tariffLines({ limit: 1 });
+    assert.deepEqual(firstPage.items.map((line) => line.normalizedTariffCode), ["000105"]);
+    assert.ok(firstPage.nextCursor);
+    assert.equal(firstPage.items[0].metadata, undefined);
+    assert.equal(firstPage.items[0].rates.general.metadata, undefined);
+
+    const secondPage = customs.tariffLines({ limit: 500, cursor: firstPage.nextCursor });
+    assert.deepEqual(secondPage.items.map((line) => line.normalizedTariffCode), ["000120"]);
+    assert.equal(secondPage.nextCursor, null);
+
+    const richLine = customs.tariffLines({ includeMetadata: true, limit: 1 }).items[0];
+    assert.equal(richLine.checkDigit, "7");
+    assert.equal(richLine.normalizedDescription, "First current goods");
+    assert.equal(richLine.context[0].normalizedDescription, "Synthetic chapter");
+    assert.equal(richLine.context[0].sourceTrace, undefined);
+    assert.equal(richLine.sourcePublishedDate, "2026-06-15");
+    assert.equal(richLine.sourceImplementationDate, "2026-07-01");
+    assert.equal(richLine.metadata.sourceTrace[0].locator, "synthetic fixture");
+    assert.equal(richLine.metadata.sourceDocuments[0].sha256, sourceDocumentSha256);
+    assert.deepEqual(richLine.metadata.warnings, ["fixture line warning"]);
+
+    assert.deepEqual(
+      customs.tariffLines({ effectiveDate: "2026-08-02", limit: 500 }).items.map((line) => line.normalizedTariffCode),
+      ["000105", "000120", "000130"]
+    );
+    assert.deepEqual(
+      customs.tariffLines({ effectiveDate: "2026-06-15", limit: 500 }).items.map((line) => line.normalizedTariffCode),
+      ["000105", "000140"]
+    );
   } finally {
     await rm(cacheDir, { recursive: true, force: true });
   }

@@ -20,6 +20,21 @@ const estimate = customs.estimate({
 });
 ```
 
+To enumerate current Schedule 1 tariff lines from an existing cache without syncing:
+
+```ts
+const customs = await createZaCustoms({ cacheDir, sync: "never" });
+
+for (let cursor: string | undefined; ;) {
+  const page = customs.tariffLines({ includeMetadata: true, limit: 500, cursor });
+  for (const line of page.items) {
+    console.log(line.normalizedTariffCode, line.displayName);
+  }
+  if (!page.nextCursor) break;
+  cursor = page.nextCursor;
+}
+```
+
 Sync modes are `never`, `if-missing`, `if-stale`, and `always`. Production apps should normally use `if-stale` in their own environment.
 
 Live SARS parser smoke tests are opt-in and use local PDF paths, for example:

@@ -86,6 +86,17 @@ export interface ZaCustomsCacheArtifacts {
   tariffLinesIndex: TariffLinesIndexV1;
 }
 
+export interface ZaCustomsTariffLineArtifactFilter {
+  effectiveDate?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ZaCustomsTariffLineArtifactPage {
+  items: TariffLineV1[];
+  nextCursor: string | null;
+}
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function zaCustomsCachePaths(root: string): ZaCustomsCachePaths {
@@ -172,6 +183,30 @@ export function readTariffLine(
 
 export function readTariffLines(artifacts: ZaCustomsCacheArtifacts, tariffCode: string): TariffLineV1[] {
   return spansForTariffCode(artifacts, tariffCode).map((span) => readTariffSpan(artifacts, span));
+}
+
+export function listTariffLinesFromArtifacts(
+  artifacts: ZaCustomsCacheArtifacts,
+  filter: ZaCustomsTariffLineArtifactFilter = {}
+): ZaCustomsTariffLineArtifactPage {
+  const effectiveDate = filter.effectiveDate ?? artifacts.manifest.resolvedEffectiveDate;
+  const limit = customsMeasureLimit(filter);
+  const cursor = filter.cursor;
+  const items: { cursor: string; line: TariffLineV1 }[] = [];
+
+  for (const span of orderedTariffLineSpans(artifacts)) {
+    const spanCursor = tariffLineCursor(span);
+    if (cursor && spanCursor <= cursor) continue;
+    if (!isSpanEffective(span, effectiveDate)) continue;
+    items.push({ cursor: spanCursor, line: readTariffSpan(artifacts, span) });
+    if (items.length >= limit + 1) break;
+  }
+
+  const page = items.slice(0, limit);
+  return {
+    items: page.map((item) => item.line),
+    nextCursor: items.length > page.length ? page.at(-1)?.cursor ?? null : null
+  };
 }
 
 export function listMeasuresFromArtifacts(
@@ -290,6 +325,19 @@ function parseTariffLinesIndex(json: string, path: string): TariffLinesIndexV1 {
 
 function spansForTariffCode(artifacts: ZaCustomsCacheArtifacts, tariffCode: string): TariffLineSpanV1[] {
   return artifacts.tariffLinesIndex.byNormalizedTariffCode[normalize(tariffCode)] ?? [];
+}
+
+function orderedTariffLineSpans(artifacts: ZaCustomsCacheArtifacts): TariffLineSpanV1[] {
+  return Object.values(artifacts.tariffLinesIndex.byNormalizedTariffCode)
+    .flat()
+    .sort((left, right) =>
+      left.normalizedTariffCode.localeCompare(right.normalizedTariffCode) ||
+      left.row - right.row
+    );
+}
+
+function tariffLineCursor(span: TariffLineSpanV1): string {
+  return `${span.normalizedTariffCode}:${String(span.row).padStart(10, "0")}`;
 }
 
 function readTariffSpan(artifacts: ZaCustomsCacheArtifacts, span: TariffLineSpanV1): TariffLineV1 {

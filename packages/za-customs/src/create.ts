@@ -14,6 +14,7 @@ import {
 import PackageJson from "../package.json" with { type: "json" };
 import {
   listMeasuresFromArtifacts,
+  listTariffLinesFromArtifacts,
   readCacheArtifacts,
   readTariffLine,
   readTariffLines,
@@ -87,16 +88,40 @@ export interface ZaCustomsTariffLineMetadata {
   warnings: string[];
 }
 
+export interface ZaCustomsTariffLineContext {
+  code: string;
+  normalizedCode: string;
+  description: string;
+  normalizedDescription: string;
+  level: number;
+}
+
 export interface ZaCustomsTariffLine {
   tariffCode: string;
   normalizedTariffCode: string;
+  checkDigit?: string | null;
   description: string;
+  normalizedDescription: string;
   displayName: string;
   statisticalUnit?: string | null;
+  context?: ZaCustomsTariffLineContext[];
   rates: ZaCustomsRateTable;
   validFrom: string;
   validTo?: string | null;
+  sourcePublishedDate?: string | null;
+  sourceImplementationDate?: string | null;
   metadata?: ZaCustomsTariffLineMetadata;
+}
+
+export interface ZaCustomsTariffLineFilter extends ZaCustomsMetadataOptions {
+  effectiveDate?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ZaCustomsTariffLinePage {
+  items: ZaCustomsTariffLine[];
+  nextCursor: string | null;
 }
 
 export interface ZaCustomsSourceReference {
@@ -141,6 +166,7 @@ export interface ZaCustoms {
   readonly rulesetId: string;
   sync(options?: { mode?: ZaCustomsSyncMode; effectiveDate?: ZaCustomsEffectiveDate }): Promise<ZaCustomsSyncResult>;
   lookup(tariffCode: string, options?: ZaCustomsMetadataOptions): ZaCustomsTariffLine | null;
+  tariffLines(filter?: ZaCustomsTariffLineFilter): ZaCustomsTariffLinePage;
   rates(tariffCode: string, options?: ZaCustomsMetadataOptions): ZaCustomsRateOption[];
   estimate(options: ZaCustomsEstimateOptions): ZaCustomsDutyEstimate;
   source(tariffCode: string): ZaCustomsSourceReference[];
@@ -232,6 +258,17 @@ class CachedZaCustoms implements ZaCustoms {
   lookup(tariffCode: string, options: ZaCustomsMetadataOptions = {}): ZaCustomsTariffLine | null {
     const line = readTariffLine(this.artifacts, tariffCode, defaultEffectiveDate(this.options.effectiveDate, this.artifacts));
     return line ? consumerLine(line, this.artifacts.manifest.rulesetManifest, options) : null;
+  }
+
+  tariffLines(filter: ZaCustomsTariffLineFilter = {}): ZaCustomsTariffLinePage {
+    const effectiveDate = filter.effectiveDate
+      ? dateOption(filter.effectiveDate)
+      : defaultEffectiveDate(this.options.effectiveDate, this.artifacts);
+    const page = listTariffLinesFromArtifacts(this.artifacts, { ...filter, effectiveDate });
+    return {
+      items: page.items.map((line) => consumerLine(line, this.artifacts.manifest.rulesetManifest, filter)),
+      nextCursor: page.nextCursor
+    };
   }
 
   rates(tariffCode: string, options: ZaCustomsMetadataOptions = {}): ZaCustomsRateOption[] {
@@ -548,15 +585,21 @@ function consumerLine(
   manifest: RulesetManifestV1,
   options: ZaCustomsMetadataOptions
 ): ZaCustomsTariffLine {
+  const context = consumerLineContext(line.context);
   return {
     tariffCode: line.tariffCode,
     normalizedTariffCode: line.normalizedTariffCode,
+    checkDigit: line.checkDigit ?? null,
     description: line.normalizedDescription || line.description,
+    normalizedDescription: line.normalizedDescription,
     displayName: formatTariffLineDisplayName(line),
     statisticalUnit: line.statisticalUnit,
+    ...(context ? { context } : {}),
     rates: consumerRates(line.rates, options),
     validFrom: line.validFrom,
     validTo: line.validTo,
+    sourcePublishedDate: line.sourcePublishedDate ?? null,
+    sourceImplementationDate: line.sourceImplementationDate ?? null,
     ...(options.includeMetadata
       ? {
           metadata: {
@@ -568,6 +611,10 @@ function consumerLine(
         }
       : {})
   };
+}
+
+function consumerLineContext(context: TariffLineV1["context"]): ZaCustomsTariffLineContext[] | undefined {
+  return context?.map(({ sourceTrace, ...publicContext }) => publicContext);
 }
 
 function consumerRates(rates: TariffLineV1["rates"], options: ZaCustomsMetadataOptions): ZaCustomsRateTable {
